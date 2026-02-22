@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unban | PiScord</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="https://pbs.twimg.com/media/Gn4ff1IXAAA8GUg.png">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="brand-wrapper">
+                <img src="https://pbs.twimg.com/media/Gn4ff1IXAAA8GUg.png" alt="Logo" class="logo-icon" onclick="playEasterEgg()" style="cursor: pointer;">
+                <a href="index.html" style="text-decoration: none;"><span class="brand-cord">cord</span></a>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">O nas</a>
+                <a href="zasady.html">Zasady</a>
+                <a href="kolo.html">Kasyno</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero" style="min-height: 90vh; display: flex; align-items: center; padding-top: 80px;">
+        <div class="container" style="text-align: center;">
+            <h1 class="mega-title">WNIOSEK O<br><span class="text-red">UŁASKAWIENIE</span></h1>
+            
+            <div id="appeal-card" style="max-width: 500px; margin: 30px auto; background: #0a0a0a; padding: 30px; border-radius: 15px; border: 1px solid #222; text-align: left; position: relative;">
+                
+                <p id="status-msg" style="display: none; font-size: 0.8rem; margin-bottom: 15px; text-align: center; font-weight: bold;"></p>
+
+            <div id="step-1">
+                <label style="color: #888; font-size: 0.8rem; display: block; margin-bottom: 8px;">WPISZ SWÓJ NICK (NA ZAWSZE)</label>
+                <input type="text" id="user-nick" placeholder="Wpisz swój nick..." 
+                    style="width: 100%; padding: 15px; background: #111; border: 1px solid #333; color: white; border-radius: 5px; outline: none; margin-bottom: 20px; font-family: 'Inter';">
+                <button onclick="saveIdentity()" class="btn-main" style="width: 100%;">ZAPISZ TOŻSAMOŚĆ</button>
+            </div>
+
+            <div id="step-2" style="display: none;">
+                <p style="color: #888; margin-bottom: 15px; font-size: 0.9rem;">Wniosek dla: <b id="display-nick" style="color: #fff;"></b></p>
+                <label style="color: #888; font-size: 0.8rem; display: block; margin-bottom: 8px;">UZASADNIENIE</label>
+                <textarea id="appeal-reason" placeholder="Napisz dlaczego zasługujesz na drugą szansę..." 
+                style="width: 100%; height: 150px; padding: 15px; background: #111; border: 1px solid #333; color: white; border-radius: 5px; outline: none; resize: none; margin-bottom: 20px; font-family: 'Inter';"></textarea>
+                <button id="send-btn" onclick="sendAppeal()" class="btn-main" style="width: 100%;">WYŚLIJ WNIOSEK</button>
+            </div>
+
+                        </div>
+        </div>
+    </section>
+
+    <div id="video-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 20000; justify-content: center; align-items: center;">
+        <div style="width: 90%; max-width: 800px; text-align: center;">
+            <video id="easter-video-player" width="100%" height="auto" controls></video>
+            <br><button onclick="closeEasterEgg()" class="btn-main" style="margin-top: 20px;">ZAMKNIJ</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
