@@ -144,7 +144,7 @@ function sendToDiscord(nick, wynik) {
             title: "🎰 Nowe losowanie w Kasynie!",
             color: wynik.includes("BAN") ? 14811155 : 3066993, 
             fields: [
-                { name: "Obywatel", value: `@**${nick}** `, inline: true },
+                { name: "Obywatel", value: `**${nick}**`, inline: true },
                 { name: "Wynik", value: `**${wynik}**`, inline: true }
             ],
             footer: { text: "System KasynoPiS v1.0" },
@@ -164,4 +164,5 @@ spinBtn.addEventListener("click", spin);
 drawWheel();
 checkLogin();
 checkCooldown();
+
 
