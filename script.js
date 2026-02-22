@@ -84,3 +84,57 @@ window.addEventListener('DOMContentLoaded', () => {
     checkIdentity();
     checkAppealCooldown();
 });
+
+function checkIdentity() {
+    const savedNick = localStorage.getItem('discordNick'); //
+    const step1 = document.getElementById('step-1');
+    const step2 = document.getElementById('step-2');
+
+    if (savedNick) {
+        if (step1) step1.style.display = 'none';
+        if (step2) step2.style.display = 'block';
+        
+        const displayNickElem = document.getElementById('display-nick');
+        if (displayNickElem) displayNickElem.innerText = savedNick;
+
+        // KLUCZOWY DODATEK: Sprawdź cooldown zaraz po rozpoznaniu nicku
+        checkAppealCooldown(); 
+    }
+}
+
+function checkAppealCooldown() {
+    // Sprawdź, czy w ogóle jesteśmy na stronie z formularzem unbana
+    const appealTextarea = document.getElementById('appeal-reason');
+    if (!appealTextarea) return false; 
+
+    const nick = localStorage.getItem('discordNick');
+    if (!nick) return false;
+
+    const lastAppeal = localStorage.getItem(`lastAppeal_${nick}`);
+    const COOLDOWN_TIME = 24 * 60 * 60 * 1000; 
+
+    if (lastAppeal) {
+        const timeLeft = parseInt(lastAppeal) + COOLDOWN_TIME - Date.now();
+        if (timeLeft > 0) {
+            const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+            
+            const step2 = document.getElementById('step-2');
+            if (step2) {
+                step2.innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <h2 style="color: #e20613; font-family: 'Archivo Black'; margin-bottom: 10px;">LIMIT WYCZERPANY</h2>
+                        <p style="color: #888;">Obywatelu <b>${nick}</b>, możesz wysłać tylko jeden wniosek na dobę.</p>
+                        <div style="margin-top: 20px; padding: 15px; background: #111; border: 1px solid #333; border-radius: 10px;">
+                            <span style="color: #888; font-size: 0.8rem; display: block; margin-bottom: 5px;">KOLEJNA SZANSA ZA:</span>
+                            <span style="color: white; font-size: 1.2rem; font-weight: bold;">${hours}h ${minutes}m</span>
+                        </div>
+                    </div>
+                `;
+            }
+            return true;
+        }
+    }
+    return false;
+}}
+
