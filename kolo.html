@@ -1,112 +1,106 @@
-const canvas = document.getElementById("wheel");
-const ctx = canvas.getContext("2d");
-const spinBtn = document.getElementById("spin-button");
-const resultText = document.getElementById("result");
-
-const COOLDOWN_TIME = 24 * 60 * 60 * 1000; 
-const prizes = [
-    { label: "UNBAN", color: "#003366" },
-    { label: "PRZEDŁUŻENIE BANA O 24H", color: "#E20613" },
-    { label: "WŁASNA ROLA", color: "#00488D" },
-    { label: "NIC", color: "#222" },
-    { label: "UŚCISK PREZESA", color: "#FFD700" },
-    { label: "PRZEDŁUŻENIE BANA O 7 DNI", color: "#E20613" },
-];
-
-const numPrizes = prizes.length;
-const arcSize = (2 * Math.PI) / numPrizes;
-let currentRotation = 0;
-
-function checkCooldown() {
-    const nick = localStorage.getItem("discordNick");
-    if (!nick) return true;
-
-    const lastSpin = localStorage.getItem(`lastSpin_${nick}`);
-    if (lastSpin) {
-        const timeLeft = parseInt(lastSpin) + COOLDOWN_TIME - Date.now();
-        if (timeLeft > 0) {
-            const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-            spinBtn.disabled = true;
-            resultText.innerText = `Wróć za: ${hours}h ${minutes}m`;
-            return true;
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasyno | PiScord</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="https://pbs.twimg.com/media/Gn4ff1IXAAA8GUg.png">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        .casino-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 50px 20px;
+            min-height: 80vh;
         }
-    }
-    spinBtn.disabled = false;
-    return false;
-}
+        .wheel-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            margin-bottom: 40px;
+        }
+        #wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 5px solid var(--pis-navy);
+            box-shadow: 0 0 30px var(--glow-pis-blue);
+            transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1);
+        }
+        .pointer {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            background: var(--pis-red);
+            clip-path: polygon(50% 100%, 0 0, 100% 0);
+            z-index: 10;
+            filter: drop-shadow(0 0 10px var(--glow-red));
+        }
+        .result-display {
+            font-family: 'Archivo Black', sans-serif;
+            font-size: 1.5rem;
+            text-align: center;
+            height: 2rem;
+            margin-top: 20px;
+            color: var(--pis-red);
+            text-shadow: 0 0 10px var(--glow-red);
+        }
+        .spin-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
 
-function drawWheel() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    prizes.forEach((prize, i) => {
-        const angle = i * arcSize;
-        ctx.beginPath();
-        ctx.fillStyle = prize.color;
-        ctx.moveTo(250, 250);
-        ctx.arc(250, 250, 240, angle, angle + arcSize);
-        ctx.lineTo(250, 250);
-        ctx.fill();
-        ctx.save();
-        ctx.translate(250, 250);
-        ctx.rotate(angle + arcSize / 2);
-        ctx.textAlign = "right";
-        ctx.fillStyle = "white";
-        ctx.font = "bold 16px Inter";
-        ctx.fillText(prize.label, 230, 8);
-        ctx.restore();
-    });
-}
+    <div id="step-1" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 5, 5, 0.98); z-index: 10000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(10px);">
+        <div style="background: #0a0a0a; padding: 40px; border: 2px solid var(--pis-red); border-radius: 15px; text-align: center; box-shadow: 0 0 30px var(--glow-red); max-width: 400px; width: 90%;">
+            <h2 style="font-family: 'Archivo Black', sans-serif; margin-bottom: 20px; color: white;">WERYFIKACJA OBYWATELA</h2>
+            <p id="status-msg" style="display: none; font-size: 0.8rem; margin-bottom: 15px; font-weight: bold;"></p>
+            <input type="text" id="user-nick" placeholder="Twój Nick..." style="width: 100%; padding: 15px; background: #111; border: 1px solid #333; color: white; border-radius: 5px; margin-bottom: 20px; font-family: 'Inter'; outline: none;">
+            <button onclick="saveIdentity()" class="btn-main" style="width: 100%;">WEJDŹ DO GRY</button>
+        </div>
+    </div>
 
-function spin() {
-    const nick = localStorage.getItem("discordNick");
-    if (!nick || spinBtn.disabled || checkCooldown()) return;
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="brand-wrapper">
+                <img src="https://pbs.twimg.com/media/Gn4ff1IXAAA8GUg.png" alt="Logo" class="logo-icon" onclick="playEasterEgg()" style="cursor: pointer;">
+                <a href="index.html" style="text-decoration: none;"><span class="brand-cord">cord</span></a>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">O nas</a>
+                <a href="zasady.html">Zasady</a>
+                <a href="przewinienia.html">Unban</a>
+            </div>
+        </div>
+    </nav>
 
-    spinBtn.disabled = true;
-    resultText.innerText = "Losowanie...";
-    
-    const extraDegrees = Math.floor(Math.random() * 360);
-    const totalSpins = 1800 + extraDegrees; 
-    currentRotation += totalSpins;
-    
-    canvas.style.transform = `rotate(${currentRotation}deg)`;
+    <div id="step-2" style="display: none;">
+        <header class="hero" style="padding: 60px 0 20px 0; min-height: auto;">
+            <div class="container" style="text-align: center;">
+                <h1 class="mega-title">KASYNO<br><span class="text-red">LOSOWANIA</span></h1>
+                <p class="hero-sub">Witaj, <span id="display-nick" style="color: white; font-weight: bold;"></span>. Powodzenia!</p>
+            </div>
+        </header>
 
-    setTimeout(() => {
-        const finalAngle = currentRotation % 360;
-        const degreesPerSegment = 360 / numPrizes;
-        const prizeIndex = Math.floor(((270 - finalAngle) % 360 + 360) % 360 / degreesPerSegment);
-        
-        const win = prizes[prizeIndex];
-        resultText.innerText = `Wynik: ${win.label}`;
-        
-        localStorage.setItem(`lastSpin_${nick}`, Date.now().toString());
-        sendToDiscord(nick, win.label); 
-        
-        if(win.label.includes("BAN")) resultText.style.color = "#E20613";
-        else resultText.style.color = "white";
-        
-        setTimeout(checkCooldown, 2000);
-    }, 5000);
-}
+        <section class="casino-section">
+            <div class="wheel-container">
+                <div class="pointer"></div>
+                <canvas id="wheel" width="500" height="500"></canvas>
+            </div>
+            <div id="result" class="result-display"></div>
+            <button id="spin-button" class="btn-main">ZAKRĘĆ KOŁEM</button>
+        </section>
+    </div>
 
-function sendToDiscord(nick, wynik) {
-    const webhookURL = "https://discord.com/api/webhooks/1475210484331581591/D25Sxyo74bKAMn7jz_Gj_U5GjrAIVVM0HYx-OJHyL4RjYL0kq8hKwL0v5hetl4276jQi";
-    fetch(webhookURL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            embeds: [{
-                title: "🎰 Nowe losowanie!",
-                color: wynik.includes("BAN") ? 14811155 : 3066993, 
-                fields: [
-                    { name: "Obywatel", value: nick, inline: true },
-                    { name: "Wynik", value: wynik, inline: true }
-                ],
-                timestamp: new Date()
-            }]
-        })
-    });
-}
-
-spinBtn.addEventListener("click", spin);
-drawWheel();
-checkCooldown();
+    <script src="script.js"></script>
+    <script src="kolo.js"></script>
+</body>
+</html>
