@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PiScord | Sympatycy w jednym gronie</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="brand-wrapper">
+                <img src="https://pbs.twimg.com/media/Gn4ff1IXAAA8GUg.png" 
+                 alt="PiS Logo" 
+                 class="logo-icon" 
+                 onclick="playEasterEgg()" 
+                 style="cursor: pointer;">
+                <span class="brand-cord">cord</span>
+            </div>
+            
+            <div class="nav-menu">
+                <div class="nav-links">
+                    <a href="zasady.html">Zasady</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="container">
+            <h1 class="mega-title">SYMPATYCY PiS<br><span class="text-red">W JEDNYM</span><br>GRONIE.</h1>
+            <p class="hero-sub">Dołącz do jedynego takiego miejsca w sieci. Zero lewicowej cenzury, pełen patriotyzm i merytoryczne dyskusje.</p>
+            <div class="hero-btns">
+                <a href="https://discord.gg/pis" class="btn-main">DOŁĄCZ</a>
+            </div>
+        </div>
+    </header>
+
+    <section id="o-nas" class="features">
+        <div class="container grid">
+            <div class="card card-navy card-hover-bg" style="--bg-url: url('https://i.iplsc.com/karol-nawrocki-w-trakcie-rozmowie-z-donaldem-trumpem/000M4DS7IFMTAXWP-C129-F4.jpg');">
+                <div class="card-content">
+                    <h2>BEZPIECZEŃSTWO</h2>
+                    <p>Nasza moderacja stoi na straży kultury i porządku. Tutaj nie musisz się bać wyrażać swoich poglądów.</p>
+                </div>
+            </div>
+            <div class="card card-red card-hover-bg" style="--bg-url: url('https://i.iplsc.com/politycy-pis-na-wspolnej-konferencji/000M63AIDXNF6KE9-C123-F4.jpg');">
+                <div class="card-content">
+                    <h2>NETWORKING</h2>
+                    <p>Tworzymy realną siłę w internecie. Spotkaj ludzi, którzy chcą silnej i suwerennej Polski.</p>
+                </div>
+            </div>
+            <div class="card card-dark card-hover-bg" style="--bg-url: url('https://i.gremicdn.pl/image/free/d3feeec5da08253aff5bc4a534e654e4/prezes-pis-jaroslaw-kaczynski-zdecydowal-kto-bedzie-kandydatem-partii-na-premiera?t=crop:6140:3808:nowe:0:142,resize:fill:948:593,enlarge:1');">
+                <div class="card-content">
+                    <h2>SPRAWIEDLIWE BANY</h2>
+                    <p>U nas panują jasne zasady. Gwarantujemy: nie dostaniesz bana za byle co, jak na serwerze Razem.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>PiScord © 2026 – Największa prawicowa społeczność Discordowa</p>
+        </div>
+    </footer>
+
+    <div id="video-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center;">
+        <div style="width: 90%; max-width: 800px; text-align: center;">
+            <video id="easter-video-player" width="100%" height="auto" controls style="border-radius: 10px; box-shadow: 0 0 30px var(--glow-red);">
+                Twoja przeglądarka nie obsługuje wideo.
+            </video>
+            <br>
+            <button onclick="closeEasterEgg()" style="margin-top: 20px; padding: 15px 30px; background: var(--pis-red); color: white; border: none; cursor: pointer; font-family: 'Archivo Black'; border-radius: 5px;">ZAMKNIJ</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

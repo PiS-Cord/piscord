@@ -1,0 +1,252 @@
+:root {
+    --pis-navy: #003366;
+    --pis-red: #E20613;
+    --bg-darkest: #050505;
+    --text-light: #ffffff;
+    --glow-red: rgba(226, 6, 19, 0.9);
+    --glow-pis-blue: rgba(0, 72, 141, 0.9);
+    --glow-white: rgba(255, 255, 255, 0.8);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-darkest);
+    color: var(--text-light);
+    overflow-x: hidden;
+    animation: fadeInPage 0.8s ease-out;
+}
+
+@keyframes fadeInPage {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* --- NAVBAR --- */
+.navbar {
+    background: rgba(5, 5, 5, 0.95);
+    padding: 10px 0;
+    border-bottom: 2px solid var(--pis-navy);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    backdrop-filter: blur(15px);
+}
+
+.nav-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 0 40px;
+}
+
+.brand-wrapper {
+    display: flex;
+    align-items: flex-end; 
+    gap: 8px;
+    text-decoration: none;
+}
+
+.logo-icon {
+    height: 4.5rem;
+    width: auto;
+    filter: drop-shadow(0 0 15px var(--glow-pis-blue));
+}
+
+.brand-cord {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 2.2rem;
+    text-transform: uppercase;
+    color: white;
+    text-shadow: 0 0 10px var(--glow-white);
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: var(--text-light);
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    margin-left: 20px;
+    transition: 0.3s;
+}
+
+.nav-links a:hover { color: var(--pis-red); }
+
+/* --- HERO --- */
+.hero {
+    padding: 120px 0 60px 0;
+    background: radial-gradient(circle at 70% 30%, #001a33, transparent 60%);
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+}
+
+.mega-title {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(3rem, 8vw, 6rem);
+    line-height: 0.85;
+    letter-spacing: -3px;
+    margin-bottom: 30px;
+}
+
+.text-red {
+    color: var(--pis-red);
+    text-shadow: 0 0 25px var(--glow-red);
+}
+
+.hero-sub {
+    font-size: 1.3rem;
+    max-width: 650px;
+    color: #aaa;
+    line-height: 1.6;
+}
+
+.hero-btns { margin-top: 45px; }
+
+.btn-main {
+    display: inline-block;
+    background: var(--pis-red);
+    color: white;
+    padding: 22px 50px;
+    text-decoration: none;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 1.3rem;
+    box-shadow: 0 0 30px var(--glow-red);
+    border-radius: 5px;
+    transition: 0.4s ease;
+}
+
+.btn-main:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 45px var(--glow-red);
+}
+
+/* --- KAFELKI / GRID --- */
+.features { 
+    padding: 140px 0 100px 0; /* Zwiększony górny margines, żeby kafelki były niżej */
+}
+
+.rules-section {
+    padding: 140px 0 100px 0; /* To samo dla strony z regulaminem */
+}
+
+.grid, .grid-center {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 25px;
+}
+
+.grid-center {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.card {
+    position: relative;
+    min-height: 180px; 
+    padding: 30px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.05);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    flex: 1 1 320px;
+    max-width: 450px;
+}
+
+.card-content { position: relative; z-index: 2; }
+
+.card h2 {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.card p {
+    line-height: 1.5;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Hover na kafelki - Czerwona obramówka */
+.card:hover {
+    transform: translateY(-5px);
+    border-color: var(--pis-red);
+    box-shadow: 0 0 15px rgba(226, 6, 19, 0.3);
+}
+
+/* --- EFEKT ZDJĘCIA (GŁÓWNA STRONA) --- */
+.card-hover-bg::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-image: var(--bg-url);
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    z-index: 1;
+    transition: 0.5s ease;
+}
+
+.card-hover-bg::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    opacity: 0;
+    z-index: 1;
+    transition: 0.5s ease;
+}
+
+.card-hover-bg:hover::before, .card-hover-bg:hover::after { opacity: 1; }
+
+/* --- SPECYFICZNE DLA ZASADY.HTML --- */
+
+/* Odstęp dla ramki Uwaga */
+.rules-section [style*="background: rgba(226, 6, 19, 0.1)"] {
+    margin-top: 80px !important;
+}
+
+/* Wyśrodkowanie pytania o charakter serwera */
+.rules-section .hero-sub {
+    text-align: center;
+    width: 100%;
+    max-width: 100%;
+    margin: 30px auto;
+}
+
+/* --- STOPKA --- */
+.footer {
+    padding: 60px 0;
+    text-align: center;
+    opacity: 0.3;
+    font-size: 0.85rem;
+}
+
+/* --- RESPONSYWNOŚĆ --- */
+@media (max-width: 768px) {
+    .mega-title { font-size: 3rem; }
+    .nav-container { padding: 0 20px; }
+    .features, .rules-section { padding: 80px 0 50px 0; }
+}
