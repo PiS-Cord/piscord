@@ -42,11 +42,11 @@ document.addEventListener("keydown", function(e) {
     }
 
     if (typed === secretSequence) {
-        openEasterEgg();
+        openBatyrEasterEgg();
     }
 });
 
-function openEasterEgg() {
+function openBatyrEasterEgg() {
     const overlay = document.getElementById("video-overlay");
     const video = document.getElementById("easter-video-player");
 
@@ -55,7 +55,7 @@ function openEasterEgg() {
     video.play();
 }
 
-function closeEasterEgg() {
+function closeBatyrEasterEgg() {
     const overlay = document.getElementById("video-overlay");
     const video = document.getElementById("easter-video-player");
 
@@ -63,3 +63,4 @@ function closeEasterEgg() {
     video.currentTime = 0;
     overlay.style.display = "none";
 }
+
