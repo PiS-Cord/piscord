@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zasady | PiScord</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="https://pbs.twimg.com/media/Gn4ff1IXAAA8GUg.png">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* Specyficzne style dla koła */
+        .casino-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 50px 20px;
+            min-height: 80vh;
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            margin-bottom: 40px;
+        }
+
+        #wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 5px solid var(--pis-navy);
+            box-shadow: 0 0 30px var(--glow-pis-blue);
+            transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1);
+        }
+
+        .pointer {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            background: var(--pis-red);
+            clip-path: polygon(50% 100%, 0 0, 100% 0);
+            z-index: 10;
+            filter: drop-shadow(0 0 10px var(--glow-red));
+        }
+
+        .result-display {
+            font-family: 'Archivo Black', sans-serif;
+            font-size: 1.5rem;
+            text-align: center;
+            height: 2rem;
+            margin-top: 20px;
+            color: var(--pis-red);
+            text-shadow: 0 0 10px var(--glow-red);
+        }
+
+        .spin-btn {
+            cursor: pointer;
+            border: none;
+            margin-top: 20px;
+        }
+
+        .spin-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: scale(1) !important;
+            box-shadow: none !important;
+        }
+    </style>
+</head>
+<body>
+
+        <div id="login-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 5, 5, 0.98); z-index: 10000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(10px);">
+        <div style="background: #0a0a0a; padding: 40px; border: 2px solid var(--pis-red); border-radius: 15px; text-align: center; box-shadow: 0 0 30px var(--glow-red); max-width: 400px; width: 90%;">
+            <h2 style="font-family: 'Archivo Black', sans-serif; margin-bottom: 20px; color: white;">WERYFIKACJA OBYWATELA</h2>
+            <p style="color: #aaa; margin-bottom: 25px; font-size: 0.9rem;">Aby wejść do kasyna, podaj swój nick z Discorda (np. minister2026).</p>
+            <input type="text" id="discord-nick" placeholder="Twój Nick..." style="width: 100%; padding: 15px; background: #111; border: 1px solid #333; color: white; border-radius: 5px; margin-bottom: 20px; font-family: 'Inter', sans-serif; outline: none;">
+            <button onclick="saveNick()" class="btn-main" style="width: 100%; padding: 15px; font-size: 1rem;">WEJDŹ DO GRY</button>
+        </div>
+    </div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="brand-wrapper">
+                <img src="https://pbs.twimg.com/media/Gn4ff1IXAAA8GUg.png" alt="Logo" class="logo-icon" onclick="playEasterEgg()" style="cursor: pointer;">
+                <a href="index.html" style="text-decoration: none;"><span class="brand-cord">cord</span></a>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">O nas</a>
+                <a href="zasady.html">Zasady</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero" style="padding: 60px 0 20px 0; min-height: auto;">
+        <div class="container" style="text-align: center;">
+            <h1 class="mega-title">KASYNO<br><span class="text-red">LOSOWANIA</span></h1>
+            <p class="hero-sub" style="margin: 0 auto;">Zaryzykuj wszystko dla dobra wspólnoty. Możesz zyskać wolność... albo wieczne potępienie.</p>
+        </div>
+    </header>
+
+    <section class="casino-section">
+        <div class="wheel-container">
+            <div class="pointer"></div>
+            <canvas id="wheel" width="500" height="500"></canvas>
+        </div>
+
+        <div id="result" class="result-display"></div>
+        
+        <button id="spin-button" class="btn-main spin-btn">ZAKRĘĆ KOŁEM</button>
+    </section>
+
+    <footer class="footer">
+        <p>Grasz na własną odpowiedzialność. Administracja nie zwraca straconego czasu.</p>
+    </footer>
+
+    <div id="video-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 20000; justify-content: center; align-items: center;">
+        <div style="width: 90%; max-width: 800px; text-align: center;">
+            <video id="easter-video-player" width="100%" height="auto" controls style="border-radius: 10px; box-shadow: 0 0 30px var(--glow-red);">
+                Twoja przeglądarka nie obsługuje wideo.
+            </video>
+            <br>
+            <button onclick="closeEasterEgg()" style="margin-top: 20px; padding: 15px 30px; background: var(--pis-red); color: white; border: none; cursor: pointer; font-family: 'Archivo Black'; border-radius: 5px;">ZAMKNIJ</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="kolo.js"></script>
+</body>
+</html>
