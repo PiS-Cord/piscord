@@ -4,7 +4,6 @@ const spinBtn = document.getElementById("spin-button");
 const resultText = document.getElementById("result");
 
 const COOLDOWN_TIME = 24 * 60 * 60 * 1000; 
-
 const prizes = [
     { label: "UNBAN", color: "#003366" },
     { label: "PRZEDŁUŻENIE BANA O 24H", color: "#E20613" },
@@ -33,6 +32,7 @@ function checkCooldown() {
             return true;
         }
     }
+    spinBtn.disabled = false;
     return false;
 }
 
@@ -90,7 +90,6 @@ function spin() {
 
 function sendToDiscord(nick, wynik) {
     const webhookURL = "https://discord.com/api/webhooks/1475210484331581591/D25Sxyo74bKAMn7jz_Gj_U5GjrAIVVM0HYx-OJHyL4RjYL0kq8hKwL0v5hetl4276jQi";
-    
     fetch(webhookURL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
