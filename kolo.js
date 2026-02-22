@@ -9,13 +9,11 @@ const COOLDOWN_TIME = 24 * 60 * 60 * 1000; // 24h
 
 const prizes = [
     { label: "UNBAN", color: "#003366" },
-    { label: "BAN +24H", color: "#E20613" },
+    { label: "PRZEDŁUŻENIE BANA O 24H", color: "#E20613" },
     { label: "WŁASNA ROLA", color: "#00488D" },
     { label: "NIC", color: "#222" },
-    { label: "PRZEDŁUŻENIE", color: "#800000" },
     { label: "UŚCISK PREZESA", color: "#FFD700" },
-    { label: "BAN +7 DNI", color: "#E20613" },
-    { label: "RABAT NA RANGĘ", color: "#003366" }
+    { label: "PRZEDŁUŻENIE BANA O 7 DNI", color: "#E20613" },
 ];
 
 const numPrizes = prizes.length;
