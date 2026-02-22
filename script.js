@@ -1,11 +1,58 @@
-// ... (reszta kodu bez zmian: Easter Eggi, Identity itp.) ...
+// =======================
+// SYSTEM TOŻSAMOŚCI
+// =======================
+
+function checkIdentity() {
+    const savedNick = localStorage.getItem('discordNick');
+    const step1 = document.getElementById('step-1');
+    const step2 = document.getElementById('step-2');
+
+    if (savedNick) {
+        if (step1) step1.style.display = 'none';
+        if (step2) step2.style.display = 'block';
+        
+        const displayNickElem = document.getElementById('display-nick');
+        if (displayNickElem) displayNickElem.innerText = savedNick;
+
+        // Sprawdzamy cooldown unbana tylko jeśli jesteśmy na właściwej stronie
+        checkAppealCooldown(); 
+    }
+}
+
+function saveIdentity() {
+    const nickInput = document.getElementById('user-nick');
+    if (!nickInput) return;
+    
+    const nick = nickInput.value.trim();
+    if (nick.length < 3) {
+        showStatus("Nick musi mieć min. 3 znaki!", "#e20613");
+        return;
+    }
+
+    localStorage.setItem('discordNick', nick);
+    location.reload(); // Przeładowanie aktywuje widoki na wszystkich podstronach
+}
+
+function showStatus(text, color) {
+    const statusMsg = document.getElementById('status-msg');
+    if (statusMsg) {
+        statusMsg.innerText = text;
+        statusMsg.style.color = color;
+        statusMsg.style.display = 'block';
+    }
+}
+
+// =======================
+// SYSTEM UNBAN (ODWOŁANIA)
+// =======================
 
 function checkAppealCooldown() {
-    const nick = localStorage.getItem('discordNick');
-    if (!nick) return false;
+    const appealTextarea = document.getElementById('appeal-reason');
+    if (!appealTextarea) return false; // Blokada unbana NIE zadziała w kasynie
 
+    const nick = localStorage.getItem('discordNick');
     const lastAppeal = localStorage.getItem(`lastAppeal_${nick}`);
-    const COOLDOWN_TIME = 24 * 60 * 60 * 1000; // 24 godziny
+    const COOLDOWN_TIME = 24 * 60 * 60 * 1000; 
 
     if (lastAppeal) {
         const timeLeft = parseInt(lastAppeal) + COOLDOWN_TIME - Date.now();
@@ -17,11 +64,12 @@ function checkAppealCooldown() {
             if (step2) {
                 step2.innerHTML = `
                     <div style="text-align: center; padding: 20px;">
-                        <h2 style="color: #e20613; font-family: 'Archivo Black'; margin-bottom: 10px;">LIMIT WYCZERPANY</h2>
-                        <p style="color: #888;">Obywatelu ${nick}, możesz wysłać tylko jeden wniosek na dobę.</p>
-                        <p style="color: white; font-weight: bold; margin-top: 10px;">Wróć za: ${hours}h ${minutes}m</p>
-                    </div>
-                `;
+                        <h2 style="color: #e20613; font-family: 'Archivo Black';">LIMIT WYCZERPANY</h2>
+                        <p style="color: #888;">Obywatelu <b>${nick}</b>, jeden wniosek na dobę.</p>
+                        <div style="margin-top: 20px; padding: 15px; background: #111; border: 1px solid #333; border-radius: 10px;">
+                            <span style="color: white; font-size: 1.2rem; font-weight: bold;">${hours}h ${minutes}m</span>
+                        </div>
+                    </div>`;
             }
             return true;
         }
@@ -31,11 +79,9 @@ function checkAppealCooldown() {
 
 function sendAppeal() {
     const nick = localStorage.getItem('discordNick');
-    
-    // Sprawdzamy cooldown przed wysłaniem
-    if (checkAppealCooldown()) return;
-
     const reasonInput = document.getElementById('appeal-reason');
+    if (!reasonInput || checkAppealCooldown()) return;
+
     const reason = reasonInput.value.trim();
     const webhook = "https://discord.com/api/webhooks/1475210484331581591/D25Sxyo74bKAMn7jz_Gj_U5GjrAIVVM0HYx-OJHyL4RjYL0kq8hKwL0v5hetl4276jQi";
 
@@ -63,15 +109,12 @@ function sendAppeal() {
             }]
         })
     }).then(() => {
-        // Zapisujemy czas wysłania wniosku dla tego nicku
         localStorage.setItem(`lastAppeal_${nick}`, Date.now().toString());
-        
         document.getElementById('step-2').innerHTML = `
             <div style="text-align: center; padding: 20px;">
-                <h2 style="color: #00ff00; font-family: 'Archivo Black'; margin-bottom: 10px;">WNIOSEK WYSŁANY!</h2>
-                <p style="color: #888;">Twoja prośba została zarejestrowana. Następna możliwa za 24h.</p>
-            </div>
-        `;
+                <h2 style="color: #00ff00; font-family: 'Archivo Black';">WNIOSEK WYSŁANY!</h2>
+                <p style="color: #888;">Powodzenia, obywatelu.</p>
+            </div>`;
     }).catch(() => {
         showStatus("Błąd połączenia!", "#e20613");
         btn.disabled = false;
@@ -79,62 +122,27 @@ function sendAppeal() {
     });
 }
 
-// Zmieniamy window.onload, aby sprawdzało też cooldown
-window.addEventListener('DOMContentLoaded', () => {
-    checkIdentity();
-    checkAppealCooldown();
-});
+// Start systemu
+window.addEventListener('DOMContentLoaded', checkIdentity);
 
-function checkIdentity() {
-    const savedNick = localStorage.getItem('discordNick'); //
-    const step1 = document.getElementById('step-1');
-    const step2 = document.getElementById('step-2');
-
-    if (savedNick) {
-        if (step1) step1.style.display = 'none';
-        if (step2) step2.style.display = 'block';
-        
-        const displayNickElem = document.getElementById('display-nick');
-        if (displayNickElem) displayNickElem.innerText = savedNick;
-
-        // KLUCZOWY DODATEK: Sprawdź cooldown zaraz po rozpoznaniu nicku
-        checkAppealCooldown(); 
-    }
+// =======================
+// EASTER EGGI
+// =======================
+let clickCount = 0;
+function playEasterEgg() {
+    clickCount++;
+    if (clickCount === 5) { openEasterEgg("film.mp4"); clickCount = 0; }
+    setTimeout(() => { clickCount = 0; }, 2000);
 }
 
-function checkAppealCooldown() {
-    // Sprawdź, czy w ogóle jesteśmy na stronie z formularzem unbana
-    const appealTextarea = document.getElementById('appeal-reason');
-    if (!appealTextarea) return false; 
+function openEasterEgg(videoFile) {
+    const overlay = document.getElementById("video-overlay");
+    const video = document.getElementById("easter-video-player");
+    if(overlay && video) { video.src = videoFile; overlay.style.display = "flex"; video.play(); }
+}
 
-    const nick = localStorage.getItem('discordNick');
-    if (!nick) return false;
-
-    const lastAppeal = localStorage.getItem(`lastAppeal_${nick}`);
-    const COOLDOWN_TIME = 24 * 60 * 60 * 1000; 
-
-    if (lastAppeal) {
-        const timeLeft = parseInt(lastAppeal) + COOLDOWN_TIME - Date.now();
-        if (timeLeft > 0) {
-            const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-            
-            const step2 = document.getElementById('step-2');
-            if (step2) {
-                step2.innerHTML = `
-                    <div style="text-align: center; padding: 20px;">
-                        <h2 style="color: #e20613; font-family: 'Archivo Black'; margin-bottom: 10px;">LIMIT WYCZERPANY</h2>
-                        <p style="color: #888;">Obywatelu <b>${nick}</b>, możesz wysłać tylko jeden wniosek na dobę.</p>
-                        <div style="margin-top: 20px; padding: 15px; background: #111; border: 1px solid #333; border-radius: 10px;">
-                            <span style="color: #888; font-size: 0.8rem; display: block; margin-bottom: 5px;">KOLEJNA SZANSA ZA:</span>
-                            <span style="color: white; font-size: 1.2rem; font-weight: bold;">${hours}h ${minutes}m</span>
-                        </div>
-                    </div>
-                `;
-            }
-            return true;
-        }
-    }
-    return false;
-}}
-
+function closeEasterEgg() {
+    const overlay = document.getElementById("video-overlay");
+    const video = document.getElementById("easter-video-player");
+    if(overlay && video) { video.pause(); video.src = ""; overlay.style.display = "none"; }
+}
