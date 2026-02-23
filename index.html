@@ -24,6 +24,16 @@
         <div class="nav-menu">
             <div class="nav-links">
                 <a href="zasady.html">Zasady</a>
+                <button onclick="sendData()">Kliknij</button>
+                <script>
+                    function sendData() {
+                      fetch("https://script.google.com/macros/s/AKfycbxyGjwNTpmOD2BbOM3lrjPNe1gnmFg50Y0esHJBchdsB1o805KO8EPy8oO5pZkm76_w/exec", {
+                        method: "POST"
+                      })
+                      .then(res => res.text())
+                      .then(data => console.log(data));
+                    }
+                </script>
                 <a href="przewinienia.html">Unban</a>
                 <a href="kolo.html" font-weight: bold;">Koło Fortuny</a>
             </div>
@@ -83,6 +93,7 @@
     <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
