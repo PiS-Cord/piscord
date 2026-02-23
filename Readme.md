@@ -1,3 +1,3 @@
-Halo
+Halo,
 działa? 
 Chyba tak
