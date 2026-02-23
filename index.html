@@ -24,16 +24,6 @@
         <div class="nav-menu">
             <div class="nav-links">
                 <a href="zasady.html">Zasady</a>
-                <button onclick="sendData()">Kliknij</button>
-                <script>
-                    function sendData() {
-                      fetch("https://script.google.com/macros/s/AKfycbz7a1FVLD1BVzobebeKma1ugHKJqL3PzfBeZQGkjxwQj659FabIYPU1oy8AEshh9fwFqw/exec", {
-                        method: "POST"
-                      })
-                      .then(res => res.text())
-                      .then(data => console.log(data));
-                    }
-                </script>
                 <a href="przewinienia.html">Unban</a>
                 <a href="kolo.html" font-weight: bold;">Koło Fortuny</a>
             </div>
@@ -74,6 +64,28 @@
         </div>
     </section>
 
+    <label>Wiersz: <input id="row" type="number" value="1"></label><br>
+    <label>Kolumna (A, B… lub nr): <input id="col" type="text" value="A"></label><br>
+    <label>Wartość: <input id="value" type="text" value="Hello world"></label><br>
+    <button onclick="sendData()">Wyślij do arkusza</button>
+
+    <script>
+    function sendData() {
+      const row = document.getElementById("row").value;
+      const col = document.getElementById("col").value;
+      const value = document.getElementById("value").value;
+
+      const url = "https://script.google.com/macros/s/AKfycbyHmUDFEvHS51d7uSYCCHQpvUWXdP-ZY9Nik7VFkn_brQgrS94UHD2fMCtSLKimFS2zjA/exec";
+
+      fetch(url + `?row=${row}&col=${col}&value=${encodeURIComponent(value)}`, {
+        method: "POST"
+      })
+      .then(res => res.text())
+      .then(data => alert("Wysłano: " + data))
+      .catch(err => alert("Błąd: " + err));
+}
+</script>
+    
     <footer class="footer">
         <div class="container">
             <p>PiScord © 2026 – Największa prawicowa społeczność Discordowa</p>
@@ -93,6 +105,7 @@
     <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
