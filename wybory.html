@@ -145,7 +145,7 @@ async function loadChart(){
   for(const key in candidates) totals[key]=0;
 
   for(let i=1;i<data.length;i++){
-    const candidate = data[i][5];
+    const candidate = data[i][4];
     if(totals[candidate] !== undefined)
       totals[candidate]++;
   }
