@@ -108,6 +108,11 @@ async function vote(candidate) {
     return;
   }
 
+  if (woj = "def") {
+    alert("Wybierz województwo!");
+    return;
+  }
+
   // Szybkie sprawdzanie duplikatów – batch po 50 wierszy
   let znaleziono = false;
   const CHUNK = 50;
