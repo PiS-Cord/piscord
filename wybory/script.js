@@ -315,19 +315,13 @@ function toggleChart(typ) {
 // ────────────────────────────────────────────────
 // Mapa województw z gradientem dominującego koloru
 // ────────────────────────────────────────────────
-let wojMap = null;
+// ────────────────────────────────────────────────
+// Zmiana kolorów województw na obrazkach
+// ────────────────────────────────────────────────
+async function odswiezKoloryWojewodztw() {
+  console.log("Aktualizacja kolorów województw na mapie prostej");
 
-async function odswiezMapeWojewodztw() {
-  console.log("START: odswiezMapeWojewodztw");
-
-  const mapContainer = document.getElementById('mapWojewodztwa');
-  if (!mapContainer) {
-    console.error("BŁĄD: Brak <div id='mapWojewodztwa'> w HTML!");
-    return;
-  }
-  console.log("Kontener mapy znaleziony – wysokość:", mapContainer.offsetHeight);
-
-  // Zbieranie danych (bez zmian)
+  // Zbieramy statystyki województw (batchowo)
   const wojStats = {};
   const CHUNK = 50;
   let r = 2;
@@ -336,99 +330,70 @@ async function odswiezMapeWojewodztw() {
   while (maDane) {
     const promises = [];
     for (let i = 0; i < CHUNK; i++) {
-      promises.push(getCell(`E${r + i}`, "Arkusz1"));
+      promises.push(Promise.all([
+        getCell(`E${r + i}`, "Arkusz1"), // województwo
+        getCell(`F${r + i}`, "Arkusz1")  // kandydat
+      ]));
     }
     const wyniki = await Promise.all(promises);
     maDane = false;
 
-    for (const wojRaw of wyniki) {
+    for (const [wojRaw, kand] of wyniki) {
       const woj = (wojRaw || "").trim();
-      if (woj) {
-        maDane = true;
-        wojStats[woj] = (wojStats[woj] || 0) + 1;
-      }
+      if (!kand || !woj) continue;
+      maDane = true;
+
+      if (!wojStats[woj]) wojStats[woj] = { total: 0, votes: {} };
+      wojStats[woj].total++;
+      wojStats[woj].votes[kand] = (wojStats[woj].votes[kand] || 0) + 1;
     }
     r += CHUNK;
     if (r > 5000) break;
   }
 
-  console.log("Dane województw:", wojStats);
+  // Dla każdego województwa znajdujemy dominujący kolor i intensywność
+  const wszystkieImg = document.querySelectorAll('.woj-img');
 
-  // Inicjalizacja mapy tylko raz
-  if (!wojMap) {
-    console.log("Tworzę nową mapę Leaflet");
-    wojMap = L.map('mapWojewodztwa').setView([52.0, 19.5], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(wojMap);
-  } else {
-    console.log("Mapa już istnieje – czyszczę stare warstwy");
-    wojMap.eachLayer(layer => {
-      if (layer instanceof L.GeoJSON) wojMap.removeLayer(layer);
-    });
-  }
+  wszystkieImg.forEach(img => {
+    const wojName = img.getAttribute('data-woj');
+    const stats = wojStats[wojName] || { total: 0, votes: {} };
 
-  // GeoJSON
-  const geojsonUrl = "https://raw.githubusercontent.com/codeforpoland/poland-geojson/master/wojewodztwa.geojson";
-  console.log("Pobieram GeoJSON z:", geojsonUrl);
+    let kolor = '#cccccc'; // szary domyślny (brak głosów)
+    let intensywnosc = 0;
 
-  fetch(geojsonUrl)
-    .then(res => {
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
-    })
-    .then(geojson => {
-      console.log("GeoJSON załadowany – rysuję warstwy");
-      L.geoJSON(geojson, {
-        style: feature => {
-          const wojName = feature.properties.nazwa || feature.properties.name_pl;
-          const votes = wojStats[wojName] || 0;
-          const maxVotes = Math.max(...Object.values(wojStats), 1);
-          const intensity = votes / maxVotes;
-
-          return {
-            fillColor: getColor(intensity),
-            weight: 2,
-            opacity: 1,
-            color: 'white',
-            dashArray: '3',
-            fillOpacity: 0.7
-          };
-        },
-        onEachFeature: (feature, layer) => {
-          const wojName = feature.properties.nazwa || feature.properties.name_pl;
-          layer.bindPopup(`${wojName}<br>Głosy: ${wojStats[wojName] || 0}`);
+    if (stats.total > 0) {
+      // Znajdź kandydata z największą liczbą głosów
+      let maxVotes = 0;
+      let dominujacy = null;
+      Object.keys(stats.votes).forEach(k => {
+        if (stats.votes[k] > maxVotes) {
+          maxVotes = stats.votes[k];
+          dominujacy = k;
         }
-      }).addTo(wojMap);
-      console.log("Mapa narysowana");
-    })
-    .catch(err => console.error("Błąd przy ładowaniu GeoJSON:", err));
+      });
+
+      if (dominujacy && candidates[dominujacy]) {
+        kolor = candidates[dominujacy].color;
+        intensywnosc = maxVotes / stats.total; // 0 do 1
+      }
+    }
+
+    // Nakładamy kolor z przezroczystością zależną od intensywności
+    img.style.filter = `hue-rotate(0deg) saturate(100%) brightness(100%) opacity(${0.3 + intensywnosc * 0.7})`;
+    img.style.backgroundColor = kolor;
+    img.style.backgroundBlendMode = 'multiply'; // lub 'overlay', 'color', 'soft-light' – przetestuj
+    img.title = `${wojName}\nGłosy: ${stats.total || 0}`;
+  });
+
+  console.log("Kolory województw zaktualizowane");
 }
 
-function getColor(intensity) {
-  return intensity > 0.8 ? '#800026' :
-         intensity > 0.6 ? '#BD0026' :
-         intensity > 0.4 ? '#E31A1C' :
-         intensity > 0.2 ? '#FC4E2A' :
-         intensity > 0.1 ? '#FD8D3C' :
-         '#FFEDA0';
-}
-
-// Pomocnicza funkcja – przyciemnianie koloru w zależności od intensywności
-function darkenColor(hex, factor = 0.5) {
-  let r = parseInt(hex.slice(1,3), 16);
-  let g = parseInt(hex.slice(3,5), 16);
-  let b = parseInt(hex.slice(5,7), 16);
-  r = Math.floor(r * factor);
-  g = Math.floor(g * factor);
-  b = Math.floor(b * factor);
-  return '#' + [r,g,b].map(x => x.toString(16).padStart(2,'0')).join('');
-}
-
-// Dodaj wywołanie mapy po załadowaniu strony i po głosie
+// Dodaj wywołanie przy starcie i po głosie
 window.addEventListener('load', () => {
   odswiezWykresy();
-  odswiezMapeWojewodztw();
+  odswiezKoloryWojewodztw();
 });
-// Odśwież przy starcie
+
+// W funkcji vote() na samym końcu:
+await odswiezKoloryWojewodztw();
 window.addEventListener('load', odswiezWykresy);
