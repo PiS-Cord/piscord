@@ -133,13 +133,13 @@ async function vote(candidate) {
     alert("Głos oddany pomyślnie");
 
     await Promise.all([
-      setFormula("H1", '=COUNTIF(F2:F10000;"A")', "Arkusz1"),
-      setFormula("I1", '=COUNTIF(F2:F10000;"B")', "Arkusz1"),
-      setFormula("J1", '=COUNTIF(F2:F10000;"C")', "Arkusz1"),
-      setFormula("K1", "=G1+H1+I1",               "Arkusz1"),
-      setFormula("L1", '=IF(J1>0;ROUND(G1/J1*100;1)&" %";"0 %")', "Arkusz1"),
-      setFormula("M1", '=IF(J1>0;ROUND(H1/J1*100;1)&" %";"0 %")', "Arkusz1"),
-      setFormula("N1", '=IF(J1>0;ROUND(I1/J1*100;1)&" %";"0 %")', "Arkusz1")
+      setFormula("H2", '=COUNTIF(F2:F10000;"A")', "Arkusz1"),
+      setFormula("I2", '=COUNTIF(F2:F10000;"B")', "Arkusz1"),
+      setFormula("J2", '=COUNTIF(F2:F10000;"C")', "Arkusz1"),
+      setFormula("K2", "=H1+I1+J1",               "Arkusz1"),
+      setFormula("L2", '=IF(J1>0;ROUND(H1/K1*100;1)&" %";"0 %")', "Arkusz1"),
+      setFormula("M2", '=IF(J1>0;ROUND(I1/K1*100;1)&" %";"0 %")', "Arkusz1"),
+      setFormula("N2", '=IF(J1>0;ROUND(J1/k1*100;1)&" %";"0 %")', "Arkusz1")
     ]);
     
   } catch (err) {
