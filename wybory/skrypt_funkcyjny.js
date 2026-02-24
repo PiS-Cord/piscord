@@ -1,71 +1,51 @@
-
-// code.js
+// code.js – zoptymalizowana wersja
 
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzTDX9VJVzLrsqmBDm9h2qsp1qc24TqYqp7T0C45BmSXp0HUJJYisBpS6REyCyofxiDoA/exec";
-// ↑↑↑ tutaj wklej swój prawdziwy URL ↑↑↑
 
-/**
- * Odczytuje wartość z konkretnej komórki
- */
+// ────────────────────────────────────────────────
+// getCell i setCell – bez zmian
+// ────────────────────────────────────────────────
 async function getCell(cellAdres, sheetName = "Arkusz1") {
   try {
     const row = cellToRow(cellAdres);
     const col = cellToCol(cellAdres);
-
     const params = new URLSearchParams({
       action: "getValue",
-      row: row,
-      col: col,
-      sheet: sheetName
+      row, col, sheet: sheetName
     });
-
     const resp = await fetch(WEB_APP_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: params
     });
-
-    if (!resp.ok) {
-      console.log("Status:", resp.status);
-      throw new Error("HTTP " + resp.status);
-    }
-
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const text = await resp.text();
-    let data;
-
     try {
-      data = JSON.parse(text);
-    } catch (e) {
-      console.log("Nie udało się sparsować JSON → surowy tekst:", text);
-      return text;   // albo null, w zależności co wolisz
+      const data = JSON.parse(text);
+      return data.value !== undefined ? data.value : data;
+    } catch {
+      return text;
     }
-
-    return data.value !== undefined ? data.value : data;
   } catch (err) {
     console.error("getCell error:", err);
     return null;
   }
 }
 
-/**
- * Zapisuje wartość do komórki
- */
 async function setCell(cellAdres, value, sheetName = "Arkusz1") {
   try {
+    const params = new URLSearchParams({
+      action: "setValue",
+      row: cellToRow(cellAdres),
+      col: cellToCol(cellAdres),
+      value,
+      sheet: sheetName
+    });
     const resp = await fetch(WEB_APP_URL, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        action: "setValue",
-        row: cellToRow(cellAdres),
-        col: cellToCol(cellAdres),
-        value: value,
-        sheet: sheetName
-      })
+      body: params
     });
-
     if (!resp.ok) throw new Error(resp.status);
     return true;
   } catch (err) {
@@ -74,44 +54,6 @@ async function setCell(cellAdres, value, sheetName = "Arkusz1") {
   }
 }
 
-async function setFormula(cellAdres, formula, sheetName = "Arkusz1") {
-  try {
-    const row = cellToRow(cellAdres);
-    const col = cellToCol(cellAdres);
-
-    const params = new URLSearchParams({
-      action: "applyFormula",
-      type:   "CUSTOM",           // nie używamy gotowych typów – wysyłamy własną formułę
-      range:  "",                 // nie używane w tym przypadku
-      row:    row,
-      col:    col,
-      sheet:  sheetName,
-      value:  formula             // <-- tu wysyłamy samą formułę jako parametr value
-    });
-
-    const resp = await fetch(WEB_APP_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: params
-    });
-
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-
-    const text = await resp.text();
-    if (text === "FORMULA" || text.includes("OK")) {
-      return true;
-    }
-
-    console.warn("Odpowiedź:", text);
-    return false;
-  } catch (err) {
-    console.error("setFormula błąd:", err);
-    return false;
-  }
-}
-// ---------------------------------------------------
-// Pomocnicze – konwersja A1 → row / col
-// ---------------------------------------------------
 function cellToRow(cell) {
   return parseInt(cell.replace(/[A-Z]+/i, ""));
 }
@@ -125,9 +67,9 @@ function cellToCol(cell) {
   return num;
 }
 
-// =======================
+// ────────────────────────────────────────────────
 // KONFIG KANDYDATÓW
-// =======================
+// ────────────────────────────────────────────────
 const candidates = {
   A: { name: "Partia Razem", color: "#960018" },
   B: { name: "Nowa Lewica", color: "#ff1900" },
@@ -136,11 +78,10 @@ const candidates = {
   E: { name: "Konfederacja Korony Polskiej", color: "#75310f" }
 };
 
-// =======================
+// ────────────────────────────────────────────────
 // GENEROWANIE PRZYCISKÓW
-// =======================
+// ────────────────────────────────────────────────
 const container = document.getElementById("candidates");
-
 for (const key in candidates) {
   const div = document.createElement("div");
   div.className = "candidate";
@@ -150,13 +91,13 @@ for (const key in candidates) {
   container.appendChild(div);
 }
 
-// =======================
-// ODDANIE GŁOSU
-// =======================
+// ────────────────────────────────────────────────
+// ODDANIE GŁOSU – zoptymalizowane sprawdzanie duplikatów
+// ────────────────────────────────────────────────
 async function vote(candidate) {
-  const nick      = document.getElementById("nick").value.trim();
+  const nick = document.getElementById("nick").value.trim();
   const discordId = document.getElementById("discordId").value.trim();
-  const woj       = document.getElementById("wojewodztwo").value;
+  const woj = document.getElementById("wojewodztwo").value;
 
   if (!nick || !discordId) {
     alert("Podaj nick i Discord ID");
@@ -167,368 +108,184 @@ async function vote(candidate) {
     return;
   }
 
-  const voteId    = "V" + Date.now();
-  const timestamp = new Date().toISOString();
-
-  try {
-    let wiersz = 2;
-    let znaleziono = false;
-    while (true) {
-    const istniejaceId = await getCell(`D${wiersz}`, "Arkusz1");
-    if (!istniejaceId) break; // pusty wiersz → koniec danych
-
-    if (istniejaceId === discordId) {
+  // Szybkie sprawdzanie duplikatów – batch po 50 wierszy
+  let znaleziono = false;
+  const CHUNK = 50;
+  let r = 2;
+  while (!znaleziono) {
+    const promises = [];
+    for (let i = 0; i < CHUNK; i++) {
+      promises.push(getCell(`D${r + i}`, "Arkusz1"));
+    }
+    const wyniki = await Promise.all(promises);
+    if (wyniki.every(v => !v || v === "")) break;
+    if (wyniki.includes(discordId)) {
       znaleziono = true;
       break;
     }
-    wiersz++;
+    r += CHUNK;
+    if (r > 10000) break; // limit bezpieczeństwa
   }
+
   if (znaleziono) {
     alert("Ten Discord ID już oddał głos!");
     return;
   }
 
-    await Promise.all([
-      setCell(`B${wiersz}`, voteId,      "Arkusz1"),
-      setCell(`C${wiersz}`, nick,        "Arkusz1"),
-      setCell(`D${wiersz}`, discordId,   "Arkusz1"),
-      setCell(`E${wiersz}`, woj,         "Arkusz1"),
-      setCell(`F${wiersz}`, candidate,   "Arkusz1"),
-      setCell(`G${wiersz}`, timestamp,   "Arkusz1")
-    ]);
-
-    alert("Głos oddany pomyślnie");
-
-    await aktualizujStatystykiKandydatow();
-    await aktualizujStatystykiWojewodztw("Arkusz1");
-    odswiezWykresy();
-    
-  } catch (err) {
-    console.error("Błąd zapisu głosu:", err);
-    alert("Nie udało się zapisać głosu.\nSpróbuj ponownie lub sprawdź konsolę.");
+  // Znajdujemy wolny wiersz
+  let wiersz = 2;
+  while (await getCell(`B${wiersz}`, "Arkusz1")) {
+    wiersz++;
+    if (wiersz > 10000) throw new Error("Za dużo wierszy");
   }
-}
-async function aktualizujStatystykiKandydatow(arkusz = "Arkusz1", wierszNaglowka = 2) {
-  const kandydaci = Object.keys(candidates);   // ["A", "B", "C", ...] – automatycznie z obiektu
 
+  // Zapis głosu
+  await Promise.all([
+    setCell(`B${wiersz}`, "V" + Date.now(), "Arkusz1"),
+    setCell(`C${wiersz}`, nick, "Arkusz1"),
+    setCell(`D${wiersz}`, discordId, "Arkusz1"),
+    setCell(`E${wiersz}`, woj, "Arkusz1"),
+    setCell(`F${wiersz}`, candidate, "Arkusz1"),
+    setCell(`G${wiersz}`, new Date().toISOString(), "Arkusz1")
+  ]);
+
+  alert("Głos oddany pomyślnie");
+
+  // Aktualizacja statystyk – tylko jedna komórka!
+  await aktualizujStatystykiKandydatow();
+  await aktualizujStatystykiWojewodztw("Arkusz1");
+  await odswiezWykresy();
+}
+
+// ────────────────────────────────────────────────
+// Statystyki kandydatów – jedna komórka tekstowa
+// ────────────────────────────────────────────────
+async function aktualizujStatystykiKandydatow(arkusz = "Arkusz1") {
+  const kandydaci = Object.keys(candidates);
   if (kandydaci.length === 0) return;
 
-  const startKolumna = 8;   // H = 8 (A=1, B=2, ..., H=8)
-  const zakresGlosow = "F2:F5000";   // możesz zmienić na F2:F lub F2:F10000
-
-  const operacje = [];
-
-  kandydaci.forEach((kod, index) => {
-    const kolumna = startKolumna + index;
-    const litera = String.fromCharCode(64 + kolumna);   // 8 → H, 9 → I itd.
-
-    // 1. Licznik głosów dla tego kandydata
-    operacje.push(
-      setCell(
-        `${litera}${wierszNaglowka}`,
-        `=COUNTIF(${zakresGlosow};"${kod}")`,
-        arkusz
-      )
-    );
-
-    // 2. Opcjonalnie: nazwa kandydata nad licznikiem (wiersz wyżej)
-    if (wierszNaglowka > 1) {
-      operacje.push(
-        setCell(
-          `${litera}${wierszNaglowka - 1}`,
-          candidates[kod].name,
-          arkusz
-        )
-      );
-    }
+  let tekst = "Wyniki ogólnopolskie:\n";
+  kandydaci.forEach(k => {
+    tekst += `${candidates[k].name}: =COUNTIF(F2:F;"${k}") `;
+    tekst += `(=ROUND(COUNTIF(F2:F;"${k}")/COUNTA(F2:F)*100;1) & "%")\n`;
   });
+  tekst += "Łącznie: =COUNTA(F2:F) głosów";
 
-  // 3. Łączna suma głosów (w kolumnie tuż po ostatnim kandydacie)
-  const ostatniaKolumnaKandydata = startKolumna + kandydaci.length - 1;
-  const sumaKolumna = ostatniaKolumnaKandydata + 1;
-  const sumaLitera = String.fromCharCode(64 + sumaKolumna);
-
-  operacje.push(
-    setCell(
-      `${sumaLitera}${wierszNaglowka}`,
-      `=SUM(${String.fromCharCode(64 + startKolumna)}${wierszNaglowka}:${String.fromCharCode(64 + ostatniaKolumnaKandydata)}${wierszNaglowka})`,
-      arkusz
-    )
-  );
-
-  // 4. Procenty (jeszcze jedna kolumna dalej)
-  const procentStart = sumaKolumna + 1;
-  kandydaci.forEach((kod, index) => {
-    const kolumnaProcent = procentStart + index;
-    const literaProcent = String.fromCharCode(64 + kolumnaProcent);
-    const literaLicznik = String.fromCharCode(64 + (startKolumna + index));
-
-    operacje.push(
-      setCell(
-        `${literaProcent}${wierszNaglowka}`,
-        `=IF(${sumaLitera}${wierszNaglowka}>0; ROUND(${literaLicznik}${wierszNaglowka}/${sumaLitera}${wierszNaglowka}*100;1) & " %"; "0 %")`,
-        arkusz
-      )
-    );
-  });
-
-  // Wykonaj wszystkie zapisy równolegle
-  await Promise.all(operacje);
+  await setCell("H1", tekst, arkusz);
+  console.log("Zaktualizowano statystyki kandydatów w H1");
 }
 
+// ────────────────────────────────────────────────
+// Statystyki województw – jedna komórka na razie (można później rozwinąć)
+// ────────────────────────────────────────────────
 async function aktualizujStatystykiWojewodztw(arkusz = "Arkusz1") {
-  const kandydaci = Object.keys(candidates);   // ["A", "B", "C", ...]
-
-  if (kandydaci.length === 0) return;
-
   const wojewodztwa = [
-    "Dolnośląskie", "Kujawsko-Pomorskie", "Lubelskie", "Lubuskie",
-    "Łódzkie", "Małopolskie", "Mazowieckie", "Opolskie",
-    "Podkarpackie", "Podlaskie", "Pomorskie", "Śląskie",
-    "Świętokrzyskie", "Warmińsko-Mazurskie", "Wielkopolskie", "Zachodniopomorskie"
+    "Dolnośląskie","Kujawsko-Pomorskie","Lubelskie","Lubuskie",
+    "Łódzkie","Małopolskie","Mazowieckie","Opolskie",
+    "Podkarpackie","Podlaskie","Pomorskie","Śląskie",
+    "Świętokrzyskie","Warmińsko-Mazurskie","Wielkopolskie","Zachodniopomorskie"
   ];
 
-  const startKolumna = 8;   // H = 8
-  const zakresGlosow = "F2:F5000";
-  const zakresWoj = "E2:E5000";
-
-  const operacje = [];
-
-  wojewodztwa.forEach((woj, wojIndex) => {
-    const kolumna = startKolumna + wojIndex;
-    const litera = String.fromCharCode(64 + kolumna);   // H, I, J, ...
-
-    // ────────────────────────────────────────────────
-    // Wiersz 3 – nazwa województwa
-    // ────────────────────────────────────────────────
-    operacje.push(
-      setCell(`${litera}3`, woj, arkusz)
-    );
-
-    // ────────────────────────────────────────────────
-    // Wiersz 4 – łączna liczba głosów w województwie
-    // ────────────────────────────────────────────────
-    operacje.push(
-      setCell(
-        `${litera}4`,
-        `=COUNTIF(${zakresWoj};"${woj}")`,
-        arkusz
-      )
-    );
-
-    // ────────────────────────────────────────────────
-    // Wiersze 5+ – głosy na poszczególnych kandydatów
-    // ────────────────────────────────────────────────
-    kandydaci.forEach((kod, kandIndex) => {
-      const wierszKandydata = 5 + kandIndex;   // A → 5, B → 6, C → 7 itd.
-
-      operacje.push(
-        setCell(
-          `${litera}${wierszKandydata}`,
-          `=COUNTIFS(${zakresWoj};"${woj}"; ${zakresGlosow};"${kod}")`,
-          arkusz
-        )
-      );
-    });
-
-    // ────────────────────────────────────────────────
-    // Procenty – po wszystkich kandydatach
-    // ────────────────────────────────────────────────
-    const wierszPierwszyProcent = 5 + kandydaci.length;
-    kandydaci.forEach((kod, kandIndex) => {
-      const wierszProcent = wierszPierwszyProcent + kandIndex;
-      const wierszLicznik = 5 + kandIndex;
-
-      operacje.push(
-        setCell(
-          `${litera}${wierszProcent}`,
-          `=IF(${litera}4>0; ROUND(${litera}${wierszLicznik}/${litera}4*100;1) & " %"; "0 %")`,
-          arkusz
-        )
-      );
-    });
+  let tekst = "Wyniki wojewódzkie:\n";
+  wojewodztwa.forEach(woj => {
+    tekst += `${woj}: =COUNTIF(E2:E;"${woj}") głosów\n`;
   });
 
-  // ────────────────────────────────────────────────
-  // Wykonaj wszystkie operacje naraz
-  // ────────────────────────────────────────────────
-  await Promise.all(operacje);
+  await setCell("H2", tekst, arkusz);
+  console.log("Zaktualizowano statystyki województw w H2");
 }
-// =======================
-// POMOCNICZA FUNKCJA – ostatni zajęty 
-// =======================
-async function getLastUsedRow(arkusz = "Arkusz1") {
-  // Najprostsza metoda: pobieramy wartość z bardzo dalekiej komórki w kolumnie A
-  // i liczymy ile wierszy jest faktycznie zajętych
-  const bardzoDaleko = await getCell("A10000", arkusz); // zakładamy max 10k wierszy
 
-  if (bardzoDaleko !== null && bardzoDaleko !== "") {
-    // jeśli coś jest daleko – trzeba by zrobić dokładniejsze sprawdzenie
-    // ale na początek zakładamy, że arkusz nie ma aż tyle wierszy
-    console.warn("Arkusz ma więcej niż 9999 wierszy – metoda może być niedokładna");
-  }
-
-  // Szukamy ostatniego wiersza z wartością w kolumnie B (voteId) – najczęściej wypełniona
-  for (let r = 9999; r >= 1; r--) {
-    const val = await getCell(`B${r}`, arkusz);
-    if (val !== null && val !== "" && val !== undefined) {
-      return r;
-    }
-  }
-
-  return 1; // jeśli arkusz pusty → zaczynamy od wiersza 1 lub 2
-}
-// zmienne na wykresy (globalne, żeby móc je niszczyć i tworzyć ponownie)
+// ────────────────────────────────────────────────
+// Odświeżanie wykresów – odczyt batchami
+// ────────────────────────────────────────────────
 let chartPieOgolne = null;
 let chartBarOgolne = null;
 let chartBarWoj = null;
 
-// ────────────────────────────────────────────────
-// Przełączanie kołowy ↔ słupkowy (ogólnopolskie)
-// ────────────────────────────────────────────────
+async function odswiezWykresy() {
+  console.log("odswiezWykresy – start");
+
+  const liczniki = {};
+  Object.keys(candidates).forEach(k => liczniki[k] = 0);
+  const wojStats = {};
+
+  const CHUNK = 50;
+  let r = 2;
+  let maDane = true;
+
+  while (maDane) {
+    const promises = [];
+    for (let i = 0; i < CHUNK; i++) {
+      promises.push(Promise.all([
+        getCell(`E${r + i}`, "Arkusz1"), // województwo
+        getCell(`F${r + i}`, "Arkusz1")  // kandydat
+      ]));
+    }
+
+    const wyniki = await Promise.all(promises);
+    maDane = false;
+
+    for (const [woj, kand] of wyniki) {
+      if (!kand) continue;
+      maDane = true;
+      liczniki[kand] = (liczniki[kand] || 0) + 1;
+
+      const w = (woj || "Brak").trim();
+      if (!wojStats[w]) wojStats[w] = {};
+      wojStats[w][kand] = (wojStats[w][kand] || 0) + 1;
+    }
+
+    r += CHUNK;
+    if (r > 5000) break;
+  }
+
+  console.log("Policzone głosy:", liczniki);
+
+  // Wykres ogólnopolski – kołowy
+  const labels = Object.keys(candidates).map(k => candidates[k].name);
+  const dane = Object.keys(candidates).map(k => liczniki[k] || 0);
+  const kolory = Object.values(candidates).map(c => c.color);
+
+  if (chartPieOgolne) chartPieOgolne.destroy();
+  chartPieOgolne = new Chart(document.getElementById('pieOgolne'), {
+    type: 'pie',
+    data: { labels, datasets: [{ data: dane, backgroundColor: kolory }] },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+  });
+
+  // Województwa – słupkowy grupowany
+  const labelsWoj = Object.keys(wojStats).sort();
+  const datasetsWoj = Object.keys(candidates).map(k => ({
+    label: candidates[k].name,
+    data: labelsWoj.map(w => wojStats[w]?.[k] || 0),
+    backgroundColor: candidates[k].color
+  }));
+
+  if (chartBarWoj) chartBarWoj.destroy();
+  chartBarWoj = new Chart(document.getElementById('barWojewodztwa'), {
+    type: 'bar',
+    data: { labels: labelsWoj, datasets: datasetsWoj },
+    options: {
+      responsive: true,
+      scales: { y: { beginAtZero: true } },
+      plugins: { legend: { position: 'top' } }
+    }
+  });
+
+  console.log("Wykresy zaktualizowane");
+}
+
+// Przełączanie wykresów (bez zmian)
 function toggleChart(typ) {
   if (typ === 'ogolne') {
-    const pieCanvas = document.getElementById('pieOgolne').parentElement;
-    const barCanvas = document.getElementById('barOgolneContainer');
-
-    if (pieCanvas.style.display !== 'none') {
-      pieCanvas.style.display = 'none';
-      barCanvas.style.display = 'block';
-    } else {
-      pieCanvas.style.display = 'block';
-      barCanvas.style.display = 'none';
-    }
+    const pie = document.getElementById('pieOgolne').parentElement;
+    const bar = document.getElementById('barOgolneContainer');
+    pie.style.display = pie.style.display === 'none' ? 'block' : 'none';
+    bar.style.display = bar.style.display === 'none' ? 'block' : 'none';
   }
 }
 
-// ────────────────────────────────────────────────
-// Główna funkcja odświeżająca wszystkie wykresy
-// ────────────────────────────────────────────────
-// ────────────────────────────────────────────────
-// Odśwież wykresy – bez getAll – tylko getCell
-// ────────────────────────────────────────────────
-async function odswiezWykresy() {
-  try {
-    // Najpierw znajdujemy ostatni wiersz z głosami (podobnie jak w vote)
-    let ostatniWiersz = 1;
-    for (let r = 2; r <= 5000; r++) {           // bezpieczny limit
-      const id = await getCell(`B${r}`, "Arkusz1");
-      if (!id || id === "" || id === null) {
-        ostatniWiersz = r - 1;
-        break;
-      }
-      ostatniWiersz = r;
-    }
-
-    if (ostatniWiersz < 2) {
-      console.log("Brak głosów w arkuszu");
-      return;
-    }
-
-    // Przygotowujemy liczniki ogólnopolskie
-    const liczniki = { A: 0, B: 0, C: 0 };
-    const wojStats = {}; // { "Mazowieckie": {A:0, B:0, C:0, total:0}, ... }
-
-    // Odczytujemy kolumny E (województwo) i F (kandydat) wiersz po wierszu
-    for (let r = 2; r <= ostatniWiersz; r++) {
-      const woj = (await getCell(`E${r}`, "Arkusz1") || "").trim();
-      const kand = await getCell(`F${r}`, "Arkusz1");
-
-      if (kand && liczniki.hasOwnProperty(kand)) {
-        liczniki[kand]++;
-
-        if (!wojStats[woj]) {
-          wojStats[woj] = { A: 0, B: 0, C: 0, total: 0 };
-        }
-        wojStats[woj][kand]++;
-        wojStats[woj].total++;
-      }
-    }
-
-    // ──────────────────────────────
-    // Wykres kołowy i słupkowy ogólnopolski
-    // ──────────────────────────────
-    const labelsOgolne = Object.keys(candidates).map(k => candidates[k].name);
-    const daneOgolne   = Object.keys(candidates).map(k => liczniki[k] || 0);
-    const kolory       = Object.values(candidates).map(c => c.color);
-
-    // Kołowy
-    if (chartPieOgolne) chartPieOgolne.destroy();
-    chartPieOgolne = new Chart(document.getElementById('pieOgolne'), {
-      type: 'pie',
-      data: {
-        labels: labelsOgolne,
-        datasets: [{
-          data: daneOgolne,
-          backgroundColor: kolory,
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { position: 'bottom' },
-          title: { display: true, text: 'Wyniki ogólnopolskie' }
-        }
-      }
-    });
-
-    // Słupkowy ogólnopolski
-    if (chartBarOgolne) chartBarOgolne.destroy();
-    chartBarOgolne = new Chart(document.getElementById('barOgolne'), {
-      type: 'bar',
-      data: {
-        labels: labelsOgolne,
-        datasets: [{
-          label: 'Liczba głosów',
-          data: daneOgolne,
-          backgroundColor: kolory,
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: { y: { beginAtZero: true } },
-        plugins: {
-          legend: { display: false },
-          title: { display: true, text: 'Wyniki ogólnopolskie – słupkowy' }
-        }
-      }
-    });
-
-    // ──────────────────────────────
-    // Wykres słupkowy grupowany – województwa
-    // ──────────────────────────────
-    const labelsWoj = Object.keys(wojStats).sort();
-    const datasetsWoj = Object.keys(candidates).map(k => ({
-      label: candidates[k].name,
-      data: labelsWoj.map(woj => wojStats[woj]?.[k] || 0),
-      backgroundColor: candidates[k].color,
-      borderWidth: 1
-    }));
-
-    if (chartBarWoj) chartBarWoj.destroy();
-    chartBarWoj = new Chart(document.getElementById('barWojewodztwa'), {
-      type: 'bar',
-      data: {
-        labels: labelsWoj,
-        datasets: datasetsWoj
-      },
-      options: {
-        responsive: true,
-        scales: {
-          x: { stacked: false },
-          y: { beginAtZero: true, stacked: false }
-        },
-        plugins: {
-          legend: { position: 'top' },
-          title: { display: true, text: 'Głosy według województw' }
-        }
-      }
-    });
-
-  } catch (err) {
-    console.error("Błąd podczas rysowania wykresów:", err);
-  }
-}
-
+// Opcjonalnie – odśwież przy starcie strony
+window.addEventListener('load', () => {
+  odswiezWykresy();
+});
