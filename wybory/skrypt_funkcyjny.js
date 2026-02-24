@@ -162,42 +162,37 @@ async function vote(candidate) {
   await odswiezWykresy();
 }
 
-// ────────────────────────────────────────────────
-// Statystyki kandydatów – jedna komórka H1 z formułą zaczynającą się od =
-// ────────────────────────────────────────────────
+// Statystyki kandydatów – H1 z prawdziwymi nowymi liniami (CHAR(10))
 async function aktualizujStatystykiKandydatow(arkusz = "Arkusz1") {
   const kandydaci = Object.keys(candidates);
   if (kandydaci.length === 0) return;
 
-  let formula = '="Wyniki ogólnopolskie: \\n';
+  let formula = '="Wyniki ogólnopolskie:" & CHAR(10)';
   kandydaci.forEach(k => {
-    formula += `${candidates[k].name}: " & COUNTIF(F2:F;"${k}") & " (" & IF(COUNTA(F2:F)>0; ROUND(COUNTIF(F2:F;"${k}")/COUNTA(F2:F)*100;1) & "%"; "0%") & ") \\n`;
+    formula += `& "${candidates[k].name}: " & COUNTIF(F2:F;"${k}") & " (" & IF(COUNTA(F2:F)>0; ROUND(COUNTIF(F2:F;"${k}")/COUNTA(F2:F)*100;1) & "%"; "0%") & ")" & CHAR(10)`;
   });
-  formula += 'Łącznie głosów: " & COUNTA(F2:F)';
+  formula += '& "Łącznie głosów: " & COUNTA(F2:F)';
 
   await setCell("H1", formula, arkusz);
-  console.log("Statystyki kandydatów zaktualizowane w H1");
+  console.log("Zaktualizowano wyniki ogólnopolskie w H1");
 }
 
-// ────────────────────────────────────────────────
-// Statystyki województw – jedna komórka H2 z formułą zaczynającą się od =
-// ────────────────────────────────────────────────
+// Statystyki województw – I1 z CHAR(10)
 async function aktualizujStatystykiWojewodztw(arkusz = "Arkusz1") {
   const wojewodztwa = [
-    "Dolnośląskie","Kujawsko-Pomorskie","Lubelskie","Lubuskie",
-    "Łódzkie","Małopolskie","Mazowieckie","Opolskie",
-    "Podkarpackie","Podlaskie","Pomorskie","Śląskie",
-    "Świętokrzyskie","Warmińsko-Mazurskie","Wielkopolskie","Zachodniopomorskie"
+    "Dolnośląskie", "Kujawsko-Pomorskie", "Lubelskie", "Lubuskie",
+    "Łódzkie", "Małopolskie", "Mazowieckie", "Opolskie",
+    "Podkarpackie", "Podlaskie", "Pomorskie", "Śląskie",
+    "Świętokrzyskie", "Warmińsko-Mazurskie", "Wielkopolskie", "Zachodniopomorskie"
   ];
 
-  let formula = '="Wyniki według województw: \\n';
+  let formula = '="Wyniki według województw:" & CHAR(10)';
   wojewodztwa.forEach(woj => {
-    formula += `${woj}: " & COUNTIF(E2:E;"${woj}") & " głosów \\n`;
+    formula += `& "${woj}: " & COUNTIF(E2:E;"${woj}") & " głosów" & CHAR(10)`;
   });
-  formula = formula.slice(0, -2); // usuń ostatni \\n
 
-  await setCell("H2", formula, arkusz);
-  console.log("Statystyki województw zaktualizowane w H2");
+  await setCell("I1", formula, arkusz);
+  console.log("Zaktualizowano wyniki wojewódzkie w I1");
 }
 
 // ────────────────────────────────────────────────
