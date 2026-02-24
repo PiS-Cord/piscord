@@ -213,33 +213,45 @@ async function odswiezWykresy() {
   const CHUNK = 50;
   let r = 2;
   let maDane = true;
+  let wierszeZBrak = 0;
 
   while (maDane) {
     const promises = [];
     for (let i = 0; i < CHUNK; i++) {
       promises.push(Promise.all([
-        getCell(`E${r + i}`, "Arkusz1"),
-        getCell(`F${r + i}`, "Arkusz1")
+        getCell(`E${r + i}`, "Arkusz1"), // województwo
+        getCell(`F${r + i}`, "Arkusz1")  // kandydat
       ]));
     }
 
     const wyniki = await Promise.all(promises);
     maDane = false;
 
-    for (const [woj, kand] of wyniki) {
+    for (const [wojRaw, kand] of wyniki) {
+      const woj = (wojRaw || "").trim(); // logujemy surową wartość
+      console.log(`Wiersz ${r}: surowe województwo = "${wojRaw}", po trim = "${woj}", kandydat = "${kand}"`);
+
       if (!kand) continue;
       maDane = true;
+
       liczniki[kand] = (liczniki[kand] || 0) + 1;
 
-      const w = (woj || "Brak").trim();
-      if (!wojStats[w]) wojStats[w] = {};
-      wojStats[w][kand] = (wojStats[w][kand] || 0) + 1;
+      if (woj === "") {
+        wierszeZBrak++;
+        woj = "Brak";
+      }
+
+      if (!wojStats[woj]) wojStats[woj] = {};
+      wojStats[woj][kand] = (wojStats[woj][kand] || 0) + 1;
     }
 
     r += CHUNK;
     if (r > 5000) break;
   }
 
+  console.log(`Ilość wierszy z "Brak": ${wierszeZBrak}`);
+  console.log("Policzone głosy:", liczniki);
+  console.log("Województwa znalezione:", Object.keys(wojStats));
   console.log("Policzone głosy:", liczniki);
 
   const labels = Object.keys(candidates).map(k => candidates[k].name);
