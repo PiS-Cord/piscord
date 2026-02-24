@@ -74,6 +74,41 @@ async function setCell(cellAdres, value, sheetName = "Arkusz1") {
   }
 }
 
+async function setFormula(cellAdres, formula, sheetName = "Arkusz1") {
+  try {
+    const row = cellToRow(cellAdres);
+    const col = cellToCol(cellAdres);
+
+    const params = new URLSearchParams({
+      action: "applyFormula",
+      type:   "CUSTOM",           // nie używamy gotowych typów – wysyłamy własną formułę
+      range:  "",                 // nie używane w tym przypadku
+      row:    row,
+      col:    col,
+      sheet:  sheetName,
+      value:  formula             // <-- tu wysyłamy samą formułę jako parametr value
+    });
+
+    const resp = await fetch(WEB_APP_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params
+    });
+
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+    const text = await resp.text();
+    if (text === "FORMULA" || text.includes("OK")) {
+      return true;
+    }
+
+    console.warn("Odpowiedź applyFormula:", text);
+    return false;
+  } catch (err) {
+    console.error("setFormula błąd:", err);
+    return false;
+  }
+}
 // ---------------------------------------------------
 // Pomocnicze – konwersja A1 → row / col
 // ---------------------------------------------------
