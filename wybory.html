@@ -50,7 +50,20 @@ input, select {
 <div id="candidates"></div>
 
 <h3>Wyniki</h3>
-<canvas id="chart" width="400" height="200"></canvas>
+<h3>Wyniki</h3>
+<table id="votesTable" border="1" style="margin:auto; border-collapse:collapse; width:80%">
+  <thead>
+    <tr>
+      <th>ID głosu</th>
+      <th>Nick Discord</th>
+      <th>Discord ID</th>
+      <th>Województwo</th>
+      <th>Kandydat</th>
+      <th>Data / Godzina</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
 
 <script>
 
@@ -110,7 +123,7 @@ async function vote(candidate){
     timestamp         // G
   ]);
 
-  await generateStats();
+  loadTable();
   alert("Głos zapisany.");
 }
 
@@ -138,34 +151,34 @@ async function generateStats(){
 
 let chart;
 
-async function loadChart(){
-
+async function loadTable() {
   const data = await Arkusze.getAll("Arkusz1");
 
-  let totals = {};
-  for(const key in candidates) totals[key]=0;
+  const tbody = document.querySelector("#votesTable tbody");
+  tbody.innerHTML = ""; // wyczyść poprzednie
 
-  for(let i=1;i<data.length;i++){
-    const candidate = data[i][4];
-    if(totals[candidate] !== undefined)
-      totals[candidate]++;
-  }
-
-  const ctx = document.getElementById("chart").getContext("2d");
-  if(chart) chart.destroy();
-
-  chart = new Chart(ctx,{
-    type:"bar",
-    data:{
-      labels:Object.keys(candidates).map(k=>candidates[k].name),
-      datasets:[{
-        label:"Liczba głosów",
-        data:Object.keys(candidates).map(k=>totals[k]),
-        backgroundColor:Object.keys(candidates).map(k=>candidates[k].color)
-      }]
+  // pomiń pierwszy wiersz (pusty)
+  for(let i=1; i<data.length; i++){
+    const row = data[i];
+    if(row[1]) { // kolumna B (ID głosu) musi istnieć
+      const tr = document.createElement("tr");
+      // B=1, C=2, D=3, E=4, F=5, G=6 → indeks 0-based
+      tr.innerHTML = `
+        <td>${row[1]}</td>
+        <td>${row[2]}</td>
+        <td>${row[3]}</td>
+        <td>${row[4]}</td>
+        <td>${row[5]}</td>
+        <td>${row[6]}</td>
+      `;
+      tbody.appendChild(tr);
     }
-  });
+  }
 }
+
+// odświeżanie co 5 sekund
+loadTable();
+setInterval(loadTable, 5000);
 
 loadChart();
 setInterval(loadChart,5000);
