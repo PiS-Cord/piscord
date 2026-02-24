@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>Wybory</title>
 <script src="arkusze.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body { font-family: Arial; text-align:center; }
@@ -63,7 +64,26 @@ table, th, td {
 <h3>Wybierz kandydata</h3>
 <div id="candidates"></div>
 
-<h3>Wyniki</h3>
+<h3>Wyniki ogólnopolskie</h3>
+<div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
+  <div style="width: 400px; height: 400px;">
+    <canvas id="pieOgolne"></canvas>
+  </div>
+  <div style="width: 400px; height: 400px; display: none;" id="barOgolneContainer">
+    <canvas id="barOgolne"></canvas>
+  </div>
+</div>
+
+<button onclick="toggleChart('ogolne')">Zmień na słupkowy / kołowy</button>
+
+<hr>
+
+<h3>Wyniki według województw</h3>
+<div style="width: 100%; max-width: 900px; margin: 0 auto;">
+  <canvas id="barWojewodztwa"></canvas>
+</div>
+
+<button onclick="odswiezWykresy()">Odśwież wykresy</button>
 <h2>Edycja arkusza z przeglądarki</h2>
 
   <label>A1: <input id="inpA1" type="text"></label><br><br>
@@ -165,6 +185,7 @@ async function vote(candidate) {
 
     await aktualizujStatystykiKandydatow();
     await aktualizujStatystykiWojewodztw("Arkusz1");
+    odswiezWykresy();
     
   } catch (err) {
     console.error("Błąd zapisu głosu:", err);
@@ -341,6 +362,143 @@ async function getLastUsedRow(arkusz = "Arkusz1") {
 
   return 1; // jeśli arkusz pusty → zaczynamy od wiersza 1 lub 2
 }
+// zmienne na wykresy (globalne, żeby móc je niszczyć i tworzyć ponownie)
+let chartPieOgolne = null;
+let chartBarOgolne = null;
+let chartBarWoj = null;
+
+// ────────────────────────────────────────────────
+// Przełączanie kołowy ↔ słupkowy (ogólnopolskie)
+// ────────────────────────────────────────────────
+function toggleChart(typ) {
+  if (typ === 'ogolne') {
+    const pieCanvas = document.getElementById('pieOgolne').parentElement;
+    const barCanvas = document.getElementById('barOgolneContainer');
+
+    if (pieCanvas.style.display !== 'none') {
+      pieCanvas.style.display = 'none';
+      barCanvas.style.display = 'block';
+    } else {
+      pieCanvas.style.display = 'block';
+      barCanvas.style.display = 'none';
+    }
+  }
+}
+
+// ────────────────────────────────────────────────
+// Główna funkcja odświeżająca wszystkie wykresy
+// ────────────────────────────────────────────────
+async function odswiezWykresy() {
+  try {
+    const dane = await getAll("Arkusz1");
+    if (!dane || dane.length < 2) {
+      console.log("Brak danych do wykresów");
+      return;
+    }
+
+    const glosy = dane.slice(1); // pomijamy nagłówki
+
+    // ──────────────────────────────
+    // 1. Dane ogólnopolskie
+    // ──────────────────────────────
+    const liczniki = { A: 0, B: 0, C: 0 };
+    glosy.forEach(w => {
+      const k = w[5]; // kolumna F → index 5
+      if (k && liczniki.hasOwnProperty(k)) liczniki[k]++;
+    });
+
+    const labelsOgolne = Object.keys(candidates).map(k => candidates[k].name);
+    const daneOgolne   = Object.values(liczniki);
+    const kolory = Object.values(candidates).map(c => c.color);
+
+    // Kołowy
+    if (chartPieOgolne) chartPieOgolne.destroy();
+    chartPieOgolne = new Chart(document.getElementById('pieOgolne'), {
+      type: 'pie',
+      data: {
+        labels: labelsOgolne,
+        datasets: [{
+          data: daneOgolne,
+          backgroundColor: kolory,
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' },
+          title: { display: true, text: 'Wyniki ogólnopolskie' }
+        }
+      }
+    });
+
+    // Słupkowy (ukryty na start)
+    if (chartBarOgolne) chartBarOgolne.destroy();
+    chartBarOgolne = new Chart(document.getElementById('barOgolne'), {
+      type: 'bar',
+      data: {
+        labels: labelsOgolne,
+        datasets: [{
+          label: 'Liczba głosów',
+          data: daneOgolne,
+          backgroundColor: kolory,
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: { y: { beginAtZero: true } },
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Wyniki ogólnopolskie – słupkowy' }
+        }
+      }
+    });
+
+    // ──────────────────────────────
+    // 2. Dane wojewódzkie (słupkowy grupowany)
+    // ──────────────────────────────
+    const wojStats = {};
+    glosy.forEach(w => {
+      const woj = w[4]?.trim() || "Brak";
+      const k = w[5];
+      if (!wojStats[woj]) wojStats[woj] = { A: 0, B: 0, C: 0 };
+      if (k && wojStats[woj].hasOwnProperty(k)) wojStats[woj][k]++;
+    });
+
+    const labelsWoj = Object.keys(wojStats);
+    const datasetsWoj = Object.keys(candidates).map(k => ({
+      label: candidates[k].name,
+      data: labelsWoj.map(woj => wojStats[woj]?.[k] || 0),
+      backgroundColor: candidates[k].color,
+      borderWidth: 1
+    }));
+
+    if (chartBarWoj) chartBarWoj.destroy();
+    chartBarWoj = new Chart(document.getElementById('barWojewodztwa'), {
+      type: 'bar',
+      data: {
+        labels: labelsWoj,
+        datasets: datasetsWoj
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: { stacked: false },
+          y: { beginAtZero: true, stacked: false }
+        },
+        plugins: {
+          legend: { position: 'top' },
+          title: { display: true, text: 'Głosy według województw' }
+        }
+      }
+    });
+
+  } catch (err) {
+    console.error("Błąd podczas rysowania wykresów:", err);
+  }
+}
+
 
 </script>
 </body>
