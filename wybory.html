@@ -134,7 +134,7 @@ async function loadTable() {
   const tbody = document.querySelector("#votesTable tbody");
   tbody.innerHTML = ""; 
 
-  // filtruj wiersze, które mają ID głosu w kolumnie B
+  // filtrujemy wiersze, które mają ID głosu (kolumna B = indeks 1)
   const filtered = data.filter(row => row[1] && row[1].toString().trim() !== "");
 
   filtered.forEach(row => {
