@@ -122,16 +122,16 @@ async function vote(candidate) {
     }
 
     await Promise.all([
-      setCell(`A${wiersz}`, "",          "Arkusz1"),
-      setCell(`B${wiersz}`, voteId,      "Arkusz1"),
-      setCell(`C${wiersz}`, nick,        "Arkusz1"),
-      setCell(`D${wiersz}`, discordId,   "Arkusz1"),
-      setCell(`E${wiersz}`, woj,         "Arkusz1"),
-      setCell(`F${wiersz}`, candidate,   "Arkusz1"),
-      setCell(`G${wiersz}`, timestamp,   "Arkusz1")
+      setCell(`A${row}`, "",          "Arkusz1"),
+      setCell(`B${row}`, voteId,      "Arkusz1"),
+      setCell(`C${row}`, nick,        "Arkusz1"),
+      setCell(`D${row}`, discordId,   "Arkusz1"),
+      setCell(`E${row}`, woj,         "Arkusz1"),
+      setCell(`F${row}`, candidate,   "Arkusz1"),
+      setCell(`G${row}`, timestamp,   "Arkusz1")
     ]);
 
-    alert("Głos zapisany pomyślnie (wiersz 2)");
+    alert("Głos oddany pomyślnie");
 
   } catch (err) {
     console.error("Błąd zapisu głosu:", err);
