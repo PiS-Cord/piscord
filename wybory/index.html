@@ -78,9 +78,16 @@ table, th, td {
 <hr>
 
 <h3>Wyniki według województw</h3>
-<div style="width: 100%; max-width: 900px; margin: 0 auto;">
-  <canvas id="barWojewodztwa"></canvas>
+<div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
+  <div style="width: 400px; height: 400px;">
+    <canvas id="pieWojewodztwa"></canvas>
+  </div>
+  <div style="width: 600px; height: 400px; display: none;" id="barWojewodztwaContainer">
+    <canvas id="barWojewodztwa"></canvas>
+  </div>
 </div>
+
+<button onclick="toggleChart('wojewodzkie')">Zmień na kołowy / słupkowy (województwa)</button>
 <button onclick="odswiezWykresy()">Odśwież wykresy</button>
 <script src="skrypt_funkcyjny.js"></script>
 </body>
