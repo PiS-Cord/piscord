@@ -307,6 +307,134 @@ function toggleChart(typ) {
     barContainer.style.display = barContainer.style.display === 'none' ? 'block' : 'none';
   }
 }
+// ────────────────────────────────────────────────
+// Mapa województw z gradientem dominującego koloru
+// ────────────────────────────────────────────────
+let wojMap = null;
 
+async function odswiezMapeWojewodztw() {
+  console.log("Odświeżanie mapy województw – start");
+
+  // Zbieramy dane z arkusza (batchowo, jak w wykresach)
+  const wojStats = {};
+  const CHUNK = 50;
+  let r = 2;
+  let maDane = true;
+
+  while (maDane) {
+    const promises = [];
+    for (let i = 0; i < CHUNK; i++) {
+      promises.push(Promise.all([
+        getCell(`E${r + i}`, "Arkusz1"), // województwo
+        getCell(`F${r + i}`, "Arkusz1")  // kandydat
+      ]));
+    }
+    const wyniki = await Promise.all(promises);
+    maDane = false;
+
+    for (const [wojRaw, kand] of wyniki) {
+      const woj = (wojRaw || "").trim();
+      if (!kand) continue;
+      maDane = true;
+
+      if (!wojStats[woj]) wojStats[woj] = { total: 0, votes: {} };
+      wojStats[woj].total++;
+      wojStats[woj].votes[kand] = (wojStats[woj].votes[kand] || 0) + 1;
+    }
+    r += CHUNK;
+    if (r > 5000) break;
+  }
+
+  console.log("Województwa z głosami:", Object.keys(wojStats));
+
+  // ──────────────────────────────
+  // Inicjalizacja mapy (tylko raz)
+  // ──────────────────────────────
+  if (!wojMap) {
+    wojMap = L.map('mapWojewodztwa').setView([52.0, 19.5], 6); // centrum Polski
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(wojMap);
+  }
+
+  // ──────────────────────────────
+  // GeoJSON województw Polski (darmowy, aktualny)
+  // ──────────────────────────────
+  const geojsonUrl = "https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/departements.geojson"; // zamień na Polski, np.:
+  // Lepiej użyj tego: https://raw.githubusercontent.com/codeforpoland/poland-geojson/master/wojewodztwa.geojson
+  const geojsonPl = "https://raw.githubusercontent.com/codeforpoland/poland-geojson/master/wojewodztwa.geojson";
+
+  fetch(geojsonPl)
+    .then(res => res.json())
+    .then(geojson => {
+      L.geoJSON(geojson, {
+        style: function(feature) {
+          const wojName = feature.properties.nazwa || feature.properties.name_pl; // nazwa województwa z GeoJSON
+          const stats = wojStats[wojName] || { total: 0, votes: {} };
+
+          if (stats.total === 0) {
+            return { fillColor: '#f0f0f0', weight: 1, opacity: 0.5, color: 'gray', fillOpacity: 0.3 };
+          }
+
+          // Znajdź dominującego kandydata i procent
+          let maxVotes = 0;
+          let dominujacyKand = null;
+          Object.keys(stats.votes).forEach(k => {
+            if (stats.votes[k] > maxVotes) {
+              maxVotes = stats.votes[k];
+              dominujacyKand = k;
+            }
+          });
+
+          const procentDominujacy = (maxVotes / stats.total) * 100;
+          const kolorBazowy = candidates[dominujacyKand]?.color || "#cccccc";
+          const intensywnosc = procentDominujacy / 100; // 0–1
+
+          // Gradient: im większy procent, tym ciemniejszy kolor
+          const kolor = darkenColor(kolorBazowy, 1 - intensywnosc); // im mniejszy procent, tym jaśniejszy
+
+          return {
+            fillColor: kolor,
+            weight: 2,
+            opacity: 1,
+            color: 'white',
+            dashArray: '3',
+            fillOpacity: 0.8
+          };
+        },
+        onEachFeature: function(feature, layer) {
+          const wojName = feature.properties.nazwa || feature.properties.name_pl;
+          const stats = wojStats[wojName] || { total: 0, votes: {} };
+          let popup = `<b>${wojName}</b><br>Głosy łącznie: ${stats.total}<br><br>`;
+          Object.keys(stats.votes).forEach(k => {
+            const procent = stats.total > 0 ? ((stats.votes[k] / stats.total) * 100).toFixed(1) : 0;
+            popup += `${candidates[k]?.name || k}: ${stats.votes[k]} (${procent}%)<br>`;
+          });
+          layer.bindPopup(popup);
+        }
+      }).addTo(wojMap);
+    })
+    .catch(err => console.error("Błąd ładowania GeoJSON:", err));
+}
+
+// Pomocnicza funkcja – przyciemnianie koloru w zależności od intensywności
+function darkenColor(hex, factor = 0.5) {
+  let r = parseInt(hex.slice(1,3), 16);
+  let g = parseInt(hex.slice(3,5), 16);
+  let b = parseInt(hex.slice(5,7), 16);
+  r = Math.floor(r * factor);
+  g = Math.floor(g * factor);
+  b = Math.floor(b * factor);
+  return '#' + [r,g,b].map(x => x.toString(16).padStart(2,'0')).join('');
+}
+
+// Dodaj wywołanie mapy po załadowaniu strony i po głosie
+window.addEventListener('load', () => {
+  odswiezWykresy();
+  odswiezMapeWojewodztw();
+});
+
+// W funkcji vote() na samym końcu dodaj:
+await odswiezMapeWojewodztw();
 // Odśwież przy starcie
 window.addEventListener('load', odswiezWykresy);
