@@ -1,4 +1,4 @@
-// code.js – zoptymalizowana wersja
+// code.js – zoptymalizowana wersja BEZ ZMIAN W APPS SCRIPT
 
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzTDX9VJVzLrsqmBDm9h2qsp1qc24TqYqp7T0C45BmSXp0HUJJYisBpS6REyCyofxiDoA/exec";
 
@@ -118,13 +118,13 @@ async function vote(candidate) {
       promises.push(getCell(`D${r + i}`, "Arkusz1"));
     }
     const wyniki = await Promise.all(promises);
-    if (wyniki.every(v => !v || v === "")) break;
+    if (wyniki.every(v => v === null || v === "")) break;
     if (wyniki.includes(discordId)) {
       znaleziono = true;
       break;
     }
     r += CHUNK;
-    if (r > 10000) break; // limit bezpieczeństwa
+    if (r > 10000) break;
   }
 
   if (znaleziono) {
@@ -136,7 +136,10 @@ async function vote(candidate) {
   let wiersz = 2;
   while (await getCell(`B${wiersz}`, "Arkusz1")) {
     wiersz++;
-    if (wiersz > 10000) throw new Error("Za dużo wierszy");
+    if (wiersz > 10000) {
+      alert("Błąd: za dużo wierszy w arkuszu!");
+      return;
+    }
   }
 
   // Zapis głosu
@@ -151,32 +154,33 @@ async function vote(candidate) {
 
   alert("Głos oddany pomyślnie");
 
-  // Aktualizacja statystyk – tylko jedna komórka!
+  // Szybka aktualizacja statystyk (jedna komórka z formułą zaczynającą się od =)
   await aktualizujStatystykiKandydatow();
   await aktualizujStatystykiWojewodztw("Arkusz1");
+
+  // Odśwież wykresy
   await odswiezWykresy();
 }
 
 // ────────────────────────────────────────────────
-// Statystyki kandydatów – jedna komórka tekstowa
+// Statystyki kandydatów – jedna komórka H1 z formułą zaczynającą się od =
 // ────────────────────────────────────────────────
 async function aktualizujStatystykiKandydatow(arkusz = "Arkusz1") {
   const kandydaci = Object.keys(candidates);
   if (kandydaci.length === 0) return;
 
-  let tekst = "Wyniki ogólnopolskie:\n";
+  let formula = '="Wyniki ogólnopolskie: \\n';
   kandydaci.forEach(k => {
-    tekst += `${candidates[k].name}: =COUNTIF(F2:F;"${k}") `;
-    tekst += `(=ROUND(COUNTIF(F2:F;"${k}")/COUNTA(F2:F)*100;1) & "%")\n`;
+    formula += `${candidates[k].name}: " & COUNTIF(F2:F;"${k}") & " (" & IF(COUNTA(F2:F)>0; ROUND(COUNTIF(F2:F;"${k}")/COUNTA(F2:F)*100;1) & "%"; "0%") & ") \\n`;
   });
-  tekst += "Łącznie: =COUNTA(F2:F) głosów";
+  formula += 'Łącznie głosów: " & COUNTA(F2:F)';
 
-  await setCell("H1", tekst, arkusz);
-  console.log("Zaktualizowano statystyki kandydatów w H1");
+  await setCell("H1", formula, arkusz);
+  console.log("Statystyki kandydatów zaktualizowane w H1");
 }
 
 // ────────────────────────────────────────────────
-// Statystyki województw – jedna komórka na razie (można później rozwinąć)
+// Statystyki województw – jedna komórka H2 z formułą zaczynającą się od =
 // ────────────────────────────────────────────────
 async function aktualizujStatystykiWojewodztw(arkusz = "Arkusz1") {
   const wojewodztwa = [
@@ -186,24 +190,25 @@ async function aktualizujStatystykiWojewodztw(arkusz = "Arkusz1") {
     "Świętokrzyskie","Warmińsko-Mazurskie","Wielkopolskie","Zachodniopomorskie"
   ];
 
-  let tekst = "Wyniki wojewódzkie:\n";
+  let formula = '="Wyniki według województw: \\n';
   wojewodztwa.forEach(woj => {
-    tekst += `${woj}: =COUNTIF(E2:E;"${woj}") głosów\n`;
+    formula += `${woj}: " & COUNTIF(E2:E;"${woj}") & " głosów \\n`;
   });
+  formula = formula.slice(0, -2); // usuń ostatni \\n
 
-  await setCell("H2", tekst, arkusz);
-  console.log("Zaktualizowano statystyki województw w H2");
+  await setCell("H2", formula, arkusz);
+  console.log("Statystyki województw zaktualizowane w H2");
 }
 
 // ────────────────────────────────────────────────
-// Odświeżanie wykresów – odczyt batchami
+ // Wykresy – odczyt batchami (już zoptymalizowane)
 // ────────────────────────────────────────────────
 let chartPieOgolne = null;
 let chartBarOgolne = null;
 let chartBarWoj = null;
 
 async function odswiezWykresy() {
-  console.log("odswiezWykresy – start");
+  console.log("Odświeżanie wykresów – start");
 
   const liczniki = {};
   Object.keys(candidates).forEach(k => liczniki[k] = 0);
@@ -217,8 +222,8 @@ async function odswiezWykresy() {
     const promises = [];
     for (let i = 0; i < CHUNK; i++) {
       promises.push(Promise.all([
-        getCell(`E${r + i}`, "Arkusz1"), // województwo
-        getCell(`F${r + i}`, "Arkusz1")  // kandydat
+        getCell(`E${r + i}`, "Arkusz1"),
+        getCell(`F${r + i}`, "Arkusz1")
       ]));
     }
 
@@ -241,7 +246,7 @@ async function odswiezWykresy() {
 
   console.log("Policzone głosy:", liczniki);
 
-  // Wykres ogólnopolski – kołowy
+  // Kołowy ogólnopolski
   const labels = Object.keys(candidates).map(k => candidates[k].name);
   const dane = Object.keys(candidates).map(k => liczniki[k] || 0);
   const kolory = Object.values(candidates).map(c => c.color);
@@ -253,12 +258,13 @@ async function odswiezWykresy() {
     options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
   });
 
-  // Województwa – słupkowy grupowany
+  // Słupkowy województw
   const labelsWoj = Object.keys(wojStats).sort();
   const datasetsWoj = Object.keys(candidates).map(k => ({
     label: candidates[k].name,
     data: labelsWoj.map(w => wojStats[w]?.[k] || 0),
-    backgroundColor: candidates[k].color
+    backgroundColor: candidates[k].color,
+    borderWidth: 1
   }));
 
   if (chartBarWoj) chartBarWoj.destroy();
@@ -272,10 +278,10 @@ async function odswiezWykresy() {
     }
   });
 
-  console.log("Wykresy zaktualizowane");
+  console.log("Wykresy gotowe");
 }
 
-// Przełączanie wykresów (bez zmian)
+// Przełączanie wykresów
 function toggleChart(typ) {
   if (typ === 'ogolne') {
     const pie = document.getElementById('pieOgolne').parentElement;
@@ -285,7 +291,5 @@ function toggleChart(typ) {
   }
 }
 
-// Opcjonalnie – odśwież przy starcie strony
-window.addEventListener('load', () => {
-  odswiezWykresy();
-});
+// Odśwież przy starcie
+window.addEventListener('load', odswiezWykresy);
