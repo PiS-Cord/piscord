@@ -16,7 +16,7 @@ const Arkusze = {
     return this._post({
       action: "appendRow",
       sheet,
-      values: JSON.stringify(valuesArray)
+      values: valuesArray   // <--- tablica bez JSON.stringify
     });
   },
 
@@ -51,9 +51,12 @@ const Arkusze = {
   _post: async function(data) {
     const res = await fetch(ARKUSZE_URL, {
       method: "POST",
-      body: new URLSearchParams(data)
+      headers: { "Content-Type": "application/json" },  // <--- wysyłamy JSON
+      body: JSON.stringify(data)
     });
-    return res.text();
+
+    // zwracamy JSON od razu, żeby getAll() w HTML było tablicą
+    return res.json();
   }
 
 };
