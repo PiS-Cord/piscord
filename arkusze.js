@@ -50,12 +50,17 @@ const Arkusze = {
   },
 
   // ---------- WEWNĘTRZNE ----------
-  _post: async function(data) {
-    const res = await fetch(ARKUSZE_URL, {
-      method: "POST",
-      body: new URLSearchParams(data)
-    });
-    return res.text(); // <- zwracamy tekst, JSON parsujemy w getAll/getValue
+_post: async function(data) {
+  const res = await fetch(ARKUSZE_URL, {
+    method: "POST",
+    body: new URLSearchParams(data)
+  });
+
+  // jeśli action GET, zwracamy JSON
+  if(data.action === "getAll" || data.action === "getValue") {
+    return res.json();   // <- to już zwraca obiekt/array w JS
   }
+  return res.text();     // dla append/setValue/setFormula
+}
 
 };
