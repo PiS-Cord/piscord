@@ -317,15 +317,16 @@ function toggleChart(typ) {
 let wojMap = null;
 
 async function odswiezMapeWojewodztw() {
-  console.log("Uruchamiam mapę województw");
+  console.log("START: odswiezMapeWojewodztw");
 
   const mapContainer = document.getElementById('mapWojewodztwa');
   if (!mapContainer) {
-    console.error("Brak <div id='mapWojewodztwa'> w HTML!");
+    console.error("BŁĄD: Brak <div id='mapWojewodztwa'> w HTML!");
     return;
   }
+  console.log("Kontener mapy znaleziony – wysokość:", mapContainer.offsetHeight);
 
-  // Zbieranie danych
+  // Zbieranie danych (bez zmian)
   const wojStats = {};
   const CHUNK = 50;
   let r = 2;
@@ -354,23 +355,29 @@ async function odswiezMapeWojewodztw() {
 
   // Inicjalizacja mapy tylko raz
   if (!wojMap) {
+    console.log("Tworzę nową mapę Leaflet");
     wojMap = L.map('mapWojewodztwa').setView([52.0, 19.5], 6);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(wojMap);
   } else {
-    // Jeśli mapa już istnieje – wyczyść stare warstwy (opcjonalne)
+    console.log("Mapa już istnieje – czyszczę stare warstwy");
     wojMap.eachLayer(layer => {
       if (layer instanceof L.GeoJSON) wojMap.removeLayer(layer);
     });
   }
 
-  // GeoJSON Polski
+  // GeoJSON
   const geojsonUrl = "https://raw.githubusercontent.com/codeforpoland/poland-geojson/master/wojewodztwa.geojson";
+  console.log("Pobieram GeoJSON z:", geojsonUrl);
 
   fetch(geojsonUrl)
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    })
     .then(geojson => {
+      console.log("GeoJSON załadowany – rysuję warstwy");
       L.geoJSON(geojson, {
         style: feature => {
           const wojName = feature.properties.nazwa || feature.properties.name_pl;
@@ -392,8 +399,9 @@ async function odswiezMapeWojewodztw() {
           layer.bindPopup(`${wojName}<br>Głosy: ${wojStats[wojName] || 0}`);
         }
       }).addTo(wojMap);
+      console.log("Mapa narysowana");
     })
-    .catch(err => console.error("Błąd GeoJSON:", err));
+    .catch(err => console.error("Błąd przy ładowaniu GeoJSON:", err));
 }
 
 function getColor(intensity) {
