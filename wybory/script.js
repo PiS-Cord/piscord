@@ -108,7 +108,7 @@ async function vote(candidate) {
     return;
   }
 
-  if (woj = "def") {
+  if (woj == "def") {
     alert("Wybierz województwo!");
     return;
   }
