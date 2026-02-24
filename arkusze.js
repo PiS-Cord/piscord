@@ -102,7 +102,7 @@ async function setFormula(cellAdres, formula, sheetName = "Arkusz1") {
       return true;
     }
 
-    console.warn("Odpowiedź applyFormula:", text);
+    console.warn("Odpowiedź:", text);
     return false;
   } catch (err) {
     console.error("setFormula błąd:", err);
