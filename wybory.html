@@ -122,26 +122,32 @@ async function vote(candidate){
 // TABELA GŁOSÓW
 // =======================
 async function loadTable() {
-  let data = await Arkusze.getAll("Arkusz1");
-  data = JSON.parse(data); // <--- bardzo ważne
+  let dataText = await Arkusze.getAll("Arkusz1");
+  let data = [];
+  try {
+    data = JSON.parse(dataText);
+  } catch(e) {
+    console.warn("Niepoprawny JSON z arkusza, ignoruję wiersze:", dataText);
+    return;
+  }
 
   const tbody = document.querySelector("#votesTable tbody");
-  tbody.innerHTML = "";
+  tbody.innerHTML = ""; 
 
-  for(let i=1; i<data.length; i++){ // pomiń wiersz 1 (pusty)
+  // pomiń pierwszy wiersz jeśli pusty
+  for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    if(row[0]) { // kolumna B (ID głosu)
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${row[0]}</td>
-        <td>${row[1]}</td>
-        <td>${row[2]}</td>
-        <td>${row[3]}</td>
-        <td>${row[4]}</td>
-        <td>${row[5]}</td>
-      `;
-      tbody.appendChild(tr);
-    }
+    if (!row[1]) continue; // kolumna B (ID głosu) musi istnieć
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${row[1]}</td>
+      <td>${row[2]}</td>
+      <td>${row[3]}</td>
+      <td>${row[4]}</td>
+      <td>${row[5]}</td>
+      <td>${row[6]}</td>
+    `;
+    tbody.appendChild(tr);
   }
 }
 
