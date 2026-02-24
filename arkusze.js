@@ -1,5 +1,5 @@
 // ===== KONFIG =====
-const ARKUSZE_URL = "TU_WKLEJ_URL_APPS_SCRIPT";
+const ARKUSZE_URL = "https://script.google.com/macros/s/AKfycbyVzCrNzNrlh8sd-ZgIzCKwtrb-jWB_C78yXmts3_MIyRblLQD-ijfCu6dMi7xcPLXkwg/exec";
 
 // ===== GŁÓWNY OBIEKT =====
 const Arkusze = {
