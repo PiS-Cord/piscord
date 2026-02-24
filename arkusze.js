@@ -1,7 +1,7 @@
 
 // code.js
 
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyWGvd3jt_9tMwBHn-6giZyYNbX8mzVJDIETzAbQgydHlJoRkiYyX85TqYyteUqAqndMQ/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzTDX9VJVzLrsqmBDm9h2qsp1qc24TqYqp7T0C45BmSXp0HUJJYisBpS6REyCyofxiDoA/exec";
 // ↑↑↑ tutaj wklej swój prawdziwy URL ↑↑↑
 
 /**
