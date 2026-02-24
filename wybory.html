@@ -129,9 +129,6 @@ async function vote(candidate) {
     // Zamiast Arkusze.appendRow → używamy zapisz()
     await zapisz("Arkusz1", wiersz);
 
-    // odświeżenie tabeli (jeśli masz taką funkcję)
-    await loadTable();
-
     alert("Głos zapisany.");
   } catch (err) {
     console.error("Błąd podczas zapisywania głosu:", err);
