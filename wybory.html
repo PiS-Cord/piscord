@@ -132,20 +132,79 @@ async function vote(candidate) {
 
     alert("Głos oddany pomyślnie");
 
-    await Promise.all([
-      setFormula("H2", '=COUNTIF(F2:F10000;"A")', "Arkusz1"),
-      setFormula("I2", '=COUNTIF(F2:F10000;"B")', "Arkusz1"),
-      setFormula("J2", '=COUNTIF(F2:F10000;"C")', "Arkusz1"),
-      setFormula("K2", "=H2+I2+J2",               "Arkusz1"),
-      setFormula("L2", '=IF(J1>0;ROUND(H2/K2*100;1)&" %";"0 %")', "Arkusz1"),
-      setFormula("M2", '=IF(J1>0;ROUND(I2/K2*100;1)&" %";"0 %")', "Arkusz1"),
-      setFormula("N2", '=IF(J1>0;ROUND(J2/k2*100;1)&" %";"0 %")', "Arkusz1")
-    ]);
+    await aktualizujStatystykiKandydatow();
     
   } catch (err) {
     console.error("Błąd zapisu głosu:", err);
     alert("Nie udało się zapisać głosu.\nSpróbuj ponownie lub sprawdź konsolę.");
   }
+}
+async function aktualizujStatystykiKandydatow(arkusz = "Arkusz1", wierszNaglowka = 1) {
+  const kandydaci = Object.keys(candidates);   // ["A", "B", "C", ...] – automatycznie z obiektu
+
+  if (kandydaci.length === 0) return;
+
+  const startKolumna = 8;   // H = 8 (A=1, B=2, ..., H=8)
+  const zakresGlosow = "F2:F5000";   // możesz zmienić na F2:F lub F2:F10000
+
+  const operacje = [];
+
+  kandydaci.forEach((kod, index) => {
+    const kolumna = startKolumna + index;
+    const litera = String.fromCharCode(64 + kolumna);   // 8 → H, 9 → I itd.
+
+    // 1. Licznik głosów dla tego kandydata
+    operacje.push(
+      setCell(
+        `${litera}${wierszNaglowka}`,
+        `=COUNTIF(${zakresGlosow};"${kod}")`,
+        arkusz
+      )
+    );
+
+    // 2. Opcjonalnie: nazwa kandydata nad licznikiem (wiersz wyżej)
+    if (wierszNaglowka > 1) {
+      operacje.push(
+        setCell(
+          `${litera}${wierszNaglowka - 1}`,
+          candidates[kod].name,
+          arkusz
+        )
+      );
+    }
+  });
+
+  // 3. Łączna suma głosów (w kolumnie tuż po ostatnim kandydacie)
+  const ostatniaKolumnaKandydata = startKolumna + kandydaci.length - 1;
+  const sumaKolumna = ostatniaKolumnaKandydata + 1;
+  const sumaLitera = String.fromCharCode(64 + sumaKolumna);
+
+  operacje.push(
+    setCell(
+      `${sumaLitera}${wierszNaglowka}`,
+      `=SUM(${String.fromCharCode(64 + startKolumna)}${wierszNaglowka}:${String.fromCharCode(64 + ostatniaKolumnaKandydata)}${wierszNaglowka})`,
+      arkusz
+    )
+  );
+
+  // 4. Procenty (jeszcze jedna kolumna dalej)
+  const procentStart = sumaKolumna + 1;
+  kandydaci.forEach((kod, index) => {
+    const kolumnaProcent = procentStart + index;
+    const literaProcent = String.fromCharCode(64 + kolumnaProcent);
+    const literaLicznik = String.fromCharCode(64 + (startKolumna + index));
+
+    operacje.push(
+      setCell(
+        `${literaProcent}${wierszNaglowka}`,
+        `=IF(${sumaLitera}${wierszNaglowka}>0; ROUND(${literaLicznik}${wierszNaglowka}/${sumaLitera}${wierszNaglowka}*100;1) & " %"; "0 %")`,
+        arkusz
+      )
+    );
+  });
+
+  // Wykonaj wszystkie zapisy równolegle
+  await Promise.all(operacje);
 }
 
 // =======================
