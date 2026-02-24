@@ -139,7 +139,7 @@ async function vote(candidate) {
     alert("Nie udało się zapisać głosu.\nSpróbuj ponownie lub sprawdź konsolę.");
   }
 }
-async function aktualizujStatystykiKandydatow(arkusz = "Arkusz1", wierszNaglowka = 1) {
+async function aktualizujStatystykiKandydatow(arkusz = "Arkusz1", wierszNaglowka = 2) {
   const kandydaci = Object.keys(candidates);   // ["A", "B", "C", ...] – automatycznie z obiektu
 
   if (kandydaci.length === 0) return;
