@@ -96,44 +96,15 @@ for (const key in candidates) {
 // ────────────────────────────────────────────────
 async function vote(candidate) {
   const nick = document.getElementById("nick").value.trim();
-  const discordId = document.getElementById("discordId").value.trim();
   const woj = document.getElementById("wojewodztwo").value;
 
-  if (!nick || !discordId) {
-    alert("Podaj nick i Discord ID");
-    return;
-  }
-  if (!/^\d{17,}$/.test(discordId)) {
-    alert("Discord ID musi mieć co najmniej 17 cyfr i składać się tylko z cyfr!");
+  if (!nick) {
+    alert("Podaj nick");
     return;
   }
 
   if (woj == "def") {
     alert("Wybierz województwo!");
-    return;
-  }
-
-  // Szybkie sprawdzanie duplikatów – batch po 50 wierszy
-  let znaleziono = false;
-  const CHUNK = 50;
-  let r = 2;
-  while (!znaleziono) {
-    const promises = [];
-    for (let i = 0; i < CHUNK; i++) {
-      promises.push(getCell(`D${r + i}`, "Arkusz1"));
-    }
-    const wyniki = await Promise.all(promises);
-    if (wyniki.every(v => v === null || v === "")) break;
-    if (wyniki.includes(discordId)) {
-      znaleziono = true;
-      break;
-    }
-    r += CHUNK;
-    if (r > 10000) break;
-  }
-
-  if (znaleziono) {
-    alert("Ten Discord ID już oddał głos!");
     return;
   }
 
@@ -151,7 +122,6 @@ async function vote(candidate) {
   await Promise.all([
     setCell(`B${wiersz}`, "V" + Date.now(), "Arkusz1"),
     setCell(`C${wiersz}`, nick, "Arkusz1"),
-    setCell(`D${wiersz}`, discordId, "Arkusz1"),
     setCell(`E${wiersz}`, woj, "Arkusz1"),
     setCell(`F${wiersz}`, candidate, "Arkusz1"),
     setCell(`G${wiersz}`, new Date().toISOString(), "Arkusz1")
