@@ -16,7 +16,7 @@ const Arkusze = {
     return this._post({
       action: "appendRow",
       sheet,
-      values: valuesArray   // <--- tablica bez JSON.stringify
+      values: JSON.stringify(valuesArray) // <--- JSON stringify bo Apps Script oczekuje string
     });
   },
 
@@ -51,12 +51,9 @@ const Arkusze = {
   _post: async function(data) {
     const res = await fetch(ARKUSZE_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },  // <--- wysyłamy JSON
-      body: JSON.stringify(data)
+      body: new URLSearchParams(data) // <--- działa z Apps Script bez żadnego serwera
     });
-
-    // zwracamy JSON od razu, żeby getAll() w HTML było tablicą
-    return res.json();
+    return res.text(); // <--- zwracamy tekst, w HTML parsujemy JSON jeśli to getAll()
   }
 
 };
