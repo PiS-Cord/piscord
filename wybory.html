@@ -103,9 +103,9 @@ for (const key in candidates) {
 // ODDANIE GŁOSU
 // =======================
 async function vote(candidate) {
-  const nick       = document.getElementById("nick").value.trim();
-  const discordId  = document.getElementById("discordId").value.trim();
-  const woj        = document.getElementById("wojewodztwo").value;
+  const nick      = document.getElementById("nick").value.trim();
+  const discordId = document.getElementById("discordId").value.trim();
+  const woj       = document.getElementById("wojewodztwo").value;
 
   if (!nick || !discordId) {
     alert("Podaj nick i Discord ID");
@@ -115,25 +115,56 @@ async function vote(candidate) {
   const voteId    = "V" + Date.now();
   const timestamp = new Date().toISOString();
 
-  const wiersz = [
-    "",          // A – pusta
-    voteId,      // B
-    nick,        // C
-    discordId,   // D
-    woj,         // E
-    candidate,   // F
-    timestamp    // G
-  ];
-
   try {
-    // Zamiast Arkusze.appendRow → używamy zapisz()
-    await zapisz("Arkusz1", wiersz);
+    // 1. Znajdujemy numer pierwszego wolnego wiersza
+    const ostatniWiersz = await getLastUsedRow("Arkusz1");
+    const nowyWiersz    = ostatniWiersz + 1;
 
-    alert("Głos zapisany.");
+    // 2. Zapisujemy wartości komórka po komórce
+    await Promise.all([
+      setCell(`A${nowyWiersz}`, "",            "Arkusz1"),  // A – pusta
+      setCell(`B${nowyWiersz}`, voteId,        "Arkusz1"),
+      setCell(`C${nowyWiersz}`, nick,          "Arkusz1"),
+      setCell(`D${nowyWiersz}`, discordId,     "Arkusz1"),
+      setCell(`E${nowyWiersz}`, woj,           "Arkusz1"),
+      setCell(`F${nowyWiersz}`, candidate,     "Arkusz1"),
+      setCell(`G${nowyWiersz}`, timestamp,     "Arkusz1")
+    ]);
+
+    alert("Głos zapisany pomyślnie.");
+    
+    // opcjonalnie: odśwież tabelę / listę głosów jeśli masz taką funkcję
+    // await loadTable();   // odkomentuj jeśli istnieje
+
   } catch (err) {
-    console.error("Błąd podczas zapisywania głosu:", err);
-    alert("Nie udało się zapisać głosu. Spróbuj ponownie.");
+    console.error("Błąd zapisu głosu:", err);
+    alert("Nie udało się zapisać głosu.\nSpróbuj ponownie lub sprawdź konsolę.");
   }
+}
+
+// =======================
+// POMOCNICZA FUNKCJA – ostatni zajęty wiersz
+// =======================
+async function getLastUsedRow(arkusz = "Arkusz1") {
+  // Najprostsza metoda: pobieramy wartość z bardzo dalekiej komórki w kolumnie A
+  // i liczymy ile wierszy jest faktycznie zajętych
+  const bardzoDaleko = await getCell("A10000", arkusz); // zakładamy max 10k wierszy
+
+  if (bardzoDaleko !== null && bardzoDaleko !== "") {
+    // jeśli coś jest daleko – trzeba by zrobić dokładniejsze sprawdzenie
+    // ale na początek zakładamy, że arkusz nie ma aż tyle wierszy
+    console.warn("Arkusz ma więcej niż 9999 wierszy – metoda może być niedokładna");
+  }
+
+  // Szukamy ostatniego wiersza z wartością w kolumnie B (voteId) – najczęściej wypełniona
+  for (let r = 9999; r >= 1; r--) {
+    const val = await getCell(`B${r}`, arkusz);
+    if (val !== null && val !== "" && val !== undefined) {
+      return r;
+    }
+  }
+
+  return 1; // jeśli arkusz pusty → zaczynamy od wiersza 1 lub 2
 }
 
 </script>
