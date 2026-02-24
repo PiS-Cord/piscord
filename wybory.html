@@ -134,21 +134,21 @@ async function loadTable() {
   const tbody = document.querySelector("#votesTable tbody");
   tbody.innerHTML = ""; 
 
-  // pomiń pierwszy wiersz jeśli pusty
-  for (let i = 1; i < data.length; i++) {
-    const row = data[i];
-    if (!row[1]) continue; // kolumna B (ID głosu) musi istnieć
+  // filtruj wiersze, które mają ID głosu w kolumnie B
+  const filtered = data.filter(row => row[1] && row[1].toString().trim() !== "");
+
+  filtered.forEach(row => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${row[1]}</td>
-      <td>${row[2]}</td>
-      <td>${row[3]}</td>
-      <td>${row[4]}</td>
-      <td>${row[5]}</td>
-      <td>${row[6]}</td>
+      <td>${row[1]}</td>   <!-- ID głosu -->
+      <td>${row[2]}</td>   <!-- Nick Discord -->
+      <td>${row[3]}</td>   <!-- Discord ID -->
+      <td>${row[4]}</td>   <!-- Województwo -->
+      <td>${row[5]}</td>   <!-- Kandydat -->
+      <td>${row[6]}</td>   <!-- Timestamp -->
     `;
     tbody.appendChild(tr);
-  }
+  });
 }
 
 // =======================
