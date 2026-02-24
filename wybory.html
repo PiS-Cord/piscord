@@ -136,10 +136,10 @@ async function vote(candidate) {
       setFormula("H2", '=COUNTIF(F2:F10000;"A")', "Arkusz1"),
       setFormula("I2", '=COUNTIF(F2:F10000;"B")', "Arkusz1"),
       setFormula("J2", '=COUNTIF(F2:F10000;"C")', "Arkusz1"),
-      setFormula("K2", "=H1+I1+J1",               "Arkusz1"),
-      setFormula("L2", '=IF(J1>0;ROUND(H1/K1*100;1)&" %";"0 %")', "Arkusz1"),
-      setFormula("M2", '=IF(J1>0;ROUND(I1/K1*100;1)&" %";"0 %")', "Arkusz1"),
-      setFormula("N2", '=IF(J1>0;ROUND(J1/k1*100;1)&" %";"0 %")', "Arkusz1")
+      setFormula("K2", "=H2+I2+J2",               "Arkusz1"),
+      setFormula("L2", '=IF(J1>0;ROUND(H2/K2*100;1)&" %";"0 %")', "Arkusz1"),
+      setFormula("M2", '=IF(J1>0;ROUND(I2/K2*100;1)&" %";"0 %")', "Arkusz1"),
+      setFormula("N2", '=IF(J1>0;ROUND(J2/k2*100;1)&" %";"0 %")', "Arkusz1")
     ]);
     
   } catch (err) {
