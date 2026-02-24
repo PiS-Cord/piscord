@@ -51,7 +51,32 @@ table, th, td {
 <div id="candidates"></div>
 
 <h3>Wyniki</h3>
-<h4></h4>
+<h2>Edycja arkusza z przeglądarki</h2>
+
+  <label>A1: <input id="inpA1" type="text"></label><br><br>
+  <button onclick="zapisz()">Zapisz do A1</button>
+  <button onclick="odczytaj()">Odczytaj A1</button>
+
+  <pre id="wynik"></pre>
+
+  <!-- Dołączamy nasz skrypt -->
+  <script src="code.js"></script>
+
+  <script>
+    async function zapisz() {
+      const wartosc = document.getElementById("inpA1").value;
+      const ok = await setCell("A1", wartosc);
+      document.getElementById("wynik").textContent = 
+        ok ? "Zapisano pomyślnie ✓" : "Błąd zapisu ✗";
+    }
+
+    async function odczytaj() {
+      const val = await getCell("A1");
+      document.getElementById("inpA1").value = val ?? "";
+      document.getElementById("wynik").textContent = 
+        val !== null ? "Odczytano ✓" : "Błąd odczytu ✗";
+    }
+  </script>
 
 <script>
 // =======================
