@@ -1,7 +1,7 @@
 
 // code.js
 
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyVzCrNzNrlh8sd-ZgIzCKwtrb-jWB_C78yXmts3_MIyRblLQD-ijfCu6dMi7xcPLXkwg/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyWGvd3jt_9tMwBHn-6giZyYNbX8mzVJDIETzAbQgydHlJoRkiYyX85TqYyteUqAqndMQ/exec";
 // ↑↑↑ tutaj wklej swój prawdziwy URL ↑↑↑
 
 /**
@@ -9,20 +9,42 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyVzCrNzNrlh8sd-ZgI
  */
 async function getCell(cellAdres, sheetName = "Arkusz1") {
   try {
-    const url = `${WEB_APP_URL}?action=getValue&row=${cellToRow(cellAdres)}&col=${cellToCol(cellAdres)}&sheet=${encodeURIComponent(sheetName)}`;
-    
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error(resp.status);
-    
-    const text = await resp.text();
-    // Twój skrypt zwraca czysty tekst lub JSON
-    try {
-      return JSON.parse(text);   // jeśli używasz json()
-    } catch {
-      return text;               // jeśli używasz ok()
+    const row = cellToRow(cellAdres);
+    const col = cellToCol(cellAdres);
+
+    const params = new URLSearchParams({
+      action: "getValue",
+      row: row,
+      col: col,
+      sheet: sheetName
+    });
+
+    const resp = await fetch(WEB_APP_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: params
+    });
+
+    if (!resp.ok) {
+      console.log("Status:", resp.status);
+      throw new Error("HTTP " + resp.status);
     }
+
+    const text = await resp.text();
+    let data;
+
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.log("Nie udało się sparsować JSON → surowy tekst:", text);
+      return text;   // albo null, w zależności co wolisz
+    }
+
+    return data.value !== undefined ? data.value : data;
   } catch (err) {
-    console.error("getCell błąd:", err);
+    console.error("getCell error:", err);
     return null;
   }
 }
