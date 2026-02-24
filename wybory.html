@@ -118,7 +118,7 @@ async function vote(candidate) {
   try {
     let wiersz = 2;
     while (await getCell(`B${wiersz}`, "Arkusz1")) {
-      row++;
+      wiersz++;
     }
 
     await Promise.all([
