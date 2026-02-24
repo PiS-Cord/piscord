@@ -135,6 +135,7 @@ async function vote(candidate) {
 
   // Odśwież wykresy
   await odswiezWykresy();
+  await odswiezMapeWojewodztw();
 }
 
 // Statystyki kandydatów – H1 z prawdziwymi nowymi liniami (CHAR(10))
@@ -429,8 +430,5 @@ window.addEventListener('load', () => {
   odswiezWykresy();
   odswiezMapeWojewodztw();
 });
-
-// W funkcji vote() na samym końcu dodaj:
-await odswiezMapeWojewodztw();
 // Odśwież przy starcie
 window.addEventListener('load', odswiezWykresy);
