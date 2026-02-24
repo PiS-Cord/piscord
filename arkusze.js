@@ -16,23 +16,25 @@ const Arkusze = {
     return this._post({
       action: "appendRow",
       sheet,
-      values: JSON.stringify(valuesArray) // <--- JSON stringify bo Apps Script oczekuje string
+      values: JSON.stringify(valuesArray) // <- JSON.stringify pasuje do Twojego Apps Script
     });
   },
 
   // ---------- ODCZYT ----------
   getValue: async function(sheet, row, col) {
-    return this._post({
+    const res = await this._post({
       action: "getValue",
       sheet, row, col
     });
+    return JSON.parse(res);
   },
 
   getAll: async function(sheet) {
-    return this._post({
+    const res = await this._post({
       action: "getAll",
       sheet
     });
+    return JSON.parse(res); // <- parsujemy JSON od Apps Script
   },
 
   // ---------- BEZPIECZNE FORMUŁY ----------
@@ -51,9 +53,9 @@ const Arkusze = {
   _post: async function(data) {
     const res = await fetch(ARKUSZE_URL, {
       method: "POST",
-      body: new URLSearchParams(data) // <--- działa z Apps Script bez żadnego serwera
+      body: new URLSearchParams(data)
     });
-    return res.text(); // <--- zwracamy tekst, w HTML parsujemy JSON jeśli to getAll()
+    return res.text(); // <- zwracamy tekst, JSON parsujemy w getAll/getValue
   }
 
 };
