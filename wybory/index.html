@@ -388,28 +388,53 @@ function toggleChart(typ) {
 // ────────────────────────────────────────────────
 // Główna funkcja odświeżająca wszystkie wykresy
 // ────────────────────────────────────────────────
+// ────────────────────────────────────────────────
+// Odśwież wykresy – bez getAll – tylko getCell
+// ────────────────────────────────────────────────
 async function odswiezWykresy() {
   try {
-    const dane = await getAll("Arkusz1");
-    if (!dane || dane.length < 2) {
-      console.log("Brak danych do wykresów");
+    // Najpierw znajdujemy ostatni wiersz z głosami (podobnie jak w vote)
+    let ostatniWiersz = 1;
+    for (let r = 2; r <= 5000; r++) {           // bezpieczny limit
+      const id = await getCell(`B${r}`, "Arkusz1");
+      if (!id || id === "" || id === null) {
+        ostatniWiersz = r - 1;
+        break;
+      }
+      ostatniWiersz = r;
+    }
+
+    if (ostatniWiersz < 2) {
+      console.log("Brak głosów w arkuszu");
       return;
     }
 
-    const glosy = dane.slice(1); // pomijamy nagłówki
-
-    // ──────────────────────────────
-    // 1. Dane ogólnopolskie
-    // ──────────────────────────────
+    // Przygotowujemy liczniki ogólnopolskie
     const liczniki = { A: 0, B: 0, C: 0 };
-    glosy.forEach(w => {
-      const k = w[5]; // kolumna F → index 5
-      if (k && liczniki.hasOwnProperty(k)) liczniki[k]++;
-    });
+    const wojStats = {}; // { "Mazowieckie": {A:0, B:0, C:0, total:0}, ... }
 
+    // Odczytujemy kolumny E (województwo) i F (kandydat) wiersz po wierszu
+    for (let r = 2; r <= ostatniWiersz; r++) {
+      const woj = (await getCell(`E${r}`, "Arkusz1") || "").trim();
+      const kand = await getCell(`F${r}`, "Arkusz1");
+
+      if (kand && liczniki.hasOwnProperty(kand)) {
+        liczniki[kand]++;
+
+        if (!wojStats[woj]) {
+          wojStats[woj] = { A: 0, B: 0, C: 0, total: 0 };
+        }
+        wojStats[woj][kand]++;
+        wojStats[woj].total++;
+      }
+    }
+
+    // ──────────────────────────────
+    // Wykres kołowy i słupkowy ogólnopolski
+    // ──────────────────────────────
     const labelsOgolne = Object.keys(candidates).map(k => candidates[k].name);
-    const daneOgolne   = Object.values(liczniki);
-    const kolory = Object.values(candidates).map(c => c.color);
+    const daneOgolne   = Object.keys(candidates).map(k => liczniki[k] || 0);
+    const kolory       = Object.values(candidates).map(c => c.color);
 
     // Kołowy
     if (chartPieOgolne) chartPieOgolne.destroy();
@@ -432,7 +457,7 @@ async function odswiezWykresy() {
       }
     });
 
-    // Słupkowy (ukryty na start)
+    // Słupkowy ogólnopolski
     if (chartBarOgolne) chartBarOgolne.destroy();
     chartBarOgolne = new Chart(document.getElementById('barOgolne'), {
       type: 'bar',
@@ -456,17 +481,9 @@ async function odswiezWykresy() {
     });
 
     // ──────────────────────────────
-    // 2. Dane wojewódzkie (słupkowy grupowany)
+    // Wykres słupkowy grupowany – województwa
     // ──────────────────────────────
-    const wojStats = {};
-    glosy.forEach(w => {
-      const woj = w[4]?.trim() || "Brak";
-      const k = w[5];
-      if (!wojStats[woj]) wojStats[woj] = { A: 0, B: 0, C: 0 };
-      if (k && wojStats[woj].hasOwnProperty(k)) wojStats[woj][k]++;
-    });
-
-    const labelsWoj = Object.keys(wojStats);
+    const labelsWoj = Object.keys(wojStats).sort();
     const datasetsWoj = Object.keys(candidates).map(k => ({
       label: candidates[k].name,
       data: labelsWoj.map(woj => wojStats[woj]?.[k] || 0),
