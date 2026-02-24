@@ -89,6 +89,7 @@ const candidates = {
 // GENEROWANIE PRZYCISKÓW
 // =======================
 const container = document.getElementById("candidates");
+
 for (const key in candidates) {
   const div = document.createElement("div");
   div.className = "candidate";
@@ -101,36 +102,42 @@ for (const key in candidates) {
 // =======================
 // ODDANIE GŁOSU
 // =======================
-async function vote(candidate){
-  const nick = document.getElementById("nick").value.trim();
-  const discordId = document.getElementById("discordId").value.trim();
-  const woj = document.getElementById("wojewodztwo").value;
+async function vote(candidate) {
+  const nick       = document.getElementById("nick").value.trim();
+  const discordId  = document.getElementById("discordId").value.trim();
+  const woj        = document.getElementById("wojewodztwo").value;
 
-  if(!nick || !discordId){
+  if (!nick || !discordId) {
     alert("Podaj nick i Discord ID");
     return;
   }
 
-  const voteId = "V" + Date.now();
+  const voteId    = "V" + Date.now();
   const timestamp = new Date().toISOString();
 
-  await Arkusze.appendRow("Arkusz1", [
-    "",        // kolumna A pusta
-    voteId,    // B
-    nick,      // C
-    discordId, // D
-    woj,       // E
-    candidate, // F
-    timestamp  // G
-  ]);
+  const wiersz = [
+    "",          // A – pusta
+    voteId,      // B
+    nick,        // C
+    discordId,   // D
+    woj,         // E
+    candidate,   // F
+    timestamp    // G
+  ];
 
-  await loadTable();
-  alert("Głos zapisany.");
+  try {
+    // Zamiast Arkusze.appendRow → używamy zapisz()
+    await zapisz("Arkusz1", wiersz);
+
+    // odświeżenie tabeli (jeśli masz taką funkcję)
+    await loadTable();
+
+    alert("Głos zapisany.");
+  } catch (err) {
+    console.error("Błąd podczas zapisywania głosu:", err);
+    alert("Nie udało się zapisać głosu. Spróbuj ponownie.");
+  }
 }
-
-// =======================
-// AUTOLOAD
-// =======================
 
 </script>
 </body>
