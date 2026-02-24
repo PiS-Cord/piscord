@@ -296,15 +296,19 @@ async function odswiezWykresy() {
 // Przełączanie wykresów
 function toggleChart(typ) {
   if (typ === 'ogolne') {
-    const pieContainer = document.getElementById('pieOgolne').parentElement;
-    const barContainer = document.getElementById('barOgolneContainer');
-    pieContainer.style.display = pieContainer.style.display === 'none' ? 'block' : 'none';
-    barContainer.style.display = barContainer.style.display === 'none' ? 'block' : 'none';
+    const pie = document.getElementById('pieOgolne');
+    const bar = document.getElementById('barOgolne');
+    if (pie && bar) {
+      pie.style.display = pie.style.display === 'none' ? 'block' : 'none';
+      bar.style.display = bar.style.display === 'none' ? 'block' : 'none';
+    }
   } else if (typ === 'wojewodzkie') {
-    const pieContainer = document.getElementById('pieWojewodztwa').parentElement;
-    const barContainer = document.getElementById('barWojewodztwaContainer');
-    pieContainer.style.display = pieContainer.style.display === 'none' ? 'block' : 'none';
-    barContainer.style.display = barContainer.style.display === 'none' ? 'block' : 'none';
+    const pie = document.getElementById('pieWojewodztwa');
+    const bar = document.getElementById('barWojewodztwa');
+    if (pie && bar) {
+      pie.style.display = pie.style.display === 'none' ? 'block' : 'none';
+      bar.style.display = bar.style.display === 'none' ? 'block' : 'none';
+    }
   }
 }
 // ────────────────────────────────────────────────
