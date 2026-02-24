@@ -116,25 +116,19 @@ async function vote(candidate) {
   const timestamp = new Date().toISOString();
 
   try {
-    // 1. Znajdujemy numer pierwszego wolnego wiersza
-    const ostatniWiersz = await getLastUsedRow("Arkusz1");
-    const nowyWiersz    = ostatniWiersz + 1;
+    const wiersz = 2;   // ← zawsze wiersz 2
 
-    // 2. Zapisujemy wartości komórka po komórce
     await Promise.all([
-      setCell(`A${nowyWiersz}`, "",            "Arkusz1"),  // A – pusta
-      setCell(`B${nowyWiersz}`, voteId,        "Arkusz1"),
-      setCell(`C${nowyWiersz}`, nick,          "Arkusz1"),
-      setCell(`D${nowyWiersz}`, discordId,     "Arkusz1"),
-      setCell(`E${nowyWiersz}`, woj,           "Arkusz1"),
-      setCell(`F${nowyWiersz}`, candidate,     "Arkusz1"),
-      setCell(`G${nowyWiersz}`, timestamp,     "Arkusz1")
+      setCell(`A${wiersz}`, "",          "Arkusz1"),
+      setCell(`B${wiersz}`, voteId,      "Arkusz1"),
+      setCell(`C${wiersz}`, nick,        "Arkusz1"),
+      setCell(`D${wiersz}`, discordId,   "Arkusz1"),
+      setCell(`E${wiersz}`, woj,         "Arkusz1"),
+      setCell(`F${wiersz}`, candidate,   "Arkusz1"),
+      setCell(`G${wiersz}`, timestamp,   "Arkusz1")
     ]);
 
-    alert("Głos zapisany pomyślnie.");
-    
-    // opcjonalnie: odśwież tabelę / listę głosów jeśli masz taką funkcję
-    // await loadTable();   // odkomentuj jeśli istnieje
+    alert("Głos zapisany pomyślnie (wiersz 2)");
 
   } catch (err) {
     console.error("Błąd zapisu głosu:", err);
