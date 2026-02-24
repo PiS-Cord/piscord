@@ -116,7 +116,10 @@ async function vote(candidate) {
   const timestamp = new Date().toISOString();
 
   try {
-    const wiersz = 2;   // ← zawsze wiersz 2
+    let row = 2;
+    while (await getCell(`B${row}`, "Arkusz1")) {
+      row++;
+    }
 
     await Promise.all([
       setCell(`A${wiersz}`, "",          "Arkusz1"),
