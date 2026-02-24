@@ -35,7 +35,7 @@ table, th, td {
 </head>
 <body>
 
-<h1>Wybory</h1>
+<h1>Wybory na najbardziej spedaloną partię w Polsce</h1>
 
 <div>
   <input id="nick" placeholder="Nick Discord">
@@ -93,10 +93,11 @@ table, th, td {
 // KONFIG KANDYDATÓW
 // =======================
 const candidates = {
-  A: { name: "Kandydat A", color: "#e63946" },
-  B: { name: "Kandydat B", color: "#1d3557" },
-  C: { name: "Kandydat C", color: "#2a9d8f" },
-  D: { name: "Kandydat D", color: "#ff0fff" }
+  A: { name: "Partia Razem", color: "#960018" },
+  B: { name: "Nowa Lewica", color: "#ff1900" },
+  C: { name: "Koalicja Obywatelska", color: "#e67022" },
+  D: { name: "Ruch Dobrobytu i Pokoju", color: "#c93322" },
+  E: { name: "Konfederacja Korony Polskiej", color: "#75310f" }
 };
 
 // =======================
@@ -125,15 +126,31 @@ async function vote(candidate) {
     alert("Podaj nick i Discord ID");
     return;
   }
+  if (!/^\d{17,}$/.test(discordId)) {
+    alert("Discord ID musi mieć co najmniej 17 cyfr i składać się tylko z cyfr!");
+    return;
+  }
 
   const voteId    = "V" + Date.now();
   const timestamp = new Date().toISOString();
 
   try {
     let wiersz = 2;
-    while (await getCell(`B${wiersz}`, "Arkusz1")) {
-      wiersz++;
+    let znaleziono = false;
+    while (true) {
+    const istniejaceId = await getCell(`D${wiersz}`, "Arkusz1");
+    if (!istniejaceId) break; // pusty wiersz → koniec danych
+
+    if (istniejaceId === discordId) {
+      znaleziono = true;
+      break;
     }
+    wiersz++;
+  }
+  if (znaleziono) {
+    alert("Ten Discord ID już oddał głos!");
+    return;
+  }
 
     await Promise.all([
       setCell(`B${wiersz}`, voteId,      "Arkusz1"),
