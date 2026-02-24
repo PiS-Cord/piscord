@@ -1,10 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="stylesheet" href="style.css">
 <meta charset="UTF-8">
 <title>Wybory</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="arkusze.js"></script>
 
 <style>
@@ -23,13 +21,16 @@ input, select {
   cursor:pointer;
   display:inline-block;
 }
-
-.map path {
-  stroke:#fff;
-  stroke-width:1;
-  cursor:pointer;
+table {
+  margin:auto;
+  border-collapse: collapse;
+  width: 80%;
 }
-
+table, th, td {
+  border: 1px solid #000;
+  padding: 5px;
+  text-align:center;
+}
 </style>
 </head>
 <body>
@@ -50,8 +51,7 @@ input, select {
 <div id="candidates"></div>
 
 <h3>Wyniki</h3>
-<h3>Wyniki</h3>
-<table id="votesTable" border="1" style="margin:auto; border-collapse:collapse; width:80%">
+<table id="votesTable">
   <thead>
     <tr>
       <th>ID głosu</th>
@@ -66,11 +66,9 @@ input, select {
 </table>
 
 <script>
-
 // =======================
 // KONFIG KANDYDATÓW
 // =======================
-
 const candidates = {
   A: { name: "Kandydat A", color: "#e63946" },
   B: { name: "Kandydat B", color: "#1d3557" },
@@ -80,9 +78,7 @@ const candidates = {
 // =======================
 // GENEROWANIE PRZYCISKÓW
 // =======================
-
 const container = document.getElementById("candidates");
-
 for (const key in candidates) {
   const div = document.createElement("div");
   div.className = "candidate";
@@ -95,9 +91,7 @@ for (const key in candidates) {
 // =======================
 // ODDANIE GŁOSU
 // =======================
-
 async function vote(candidate){
-
   const nick = document.getElementById("nick").value.trim();
   const discordId = document.getElementById("discordId").value.trim();
   const woj = document.getElementById("wojewodztwo").value;
@@ -107,83 +101,56 @@ async function vote(candidate){
     return;
   }
 
-  const data = await Arkusze.getAll("Arkusz1");
-  const nextRow = data.length + 1; // wiersz 1 pusty
-
   const voteId = "V" + Date.now();
   const timestamp = new Date().toISOString();
 
   await Arkusze.appendRow("Arkusz1", [
-    "",               // kolumna A pusta
-    voteId,           // B
-    nick,             // C
-    discordId,        // D
-    woj,              // E
-    candidate,        // F
-    timestamp         // G
+    "",        // kolumna A pusta
+    voteId,    // B
+    nick,      // C
+    discordId, // D
+    woj,       // E
+    candidate, // F
+    timestamp  // G
   ]);
 
-  loadTable();
+  await loadTable();
   alert("Głos zapisany.");
 }
 
 // =======================
-// GENEROWANIE FORMUŁ W KOLUMNIE W
+// TABELA GŁOSÓW
 // =======================
-
-async function generateStats(){
-
-  let row = 2;
-
-  for(const key in candidates){
-
-    await Arkusze.setValue("Arkusz1", row, "W", candidates[key].name);
-    await Arkusze.applyFormula("Arkusz1", row, "X", "COUNTIF", "F:F,\""+key+"\"");
-    row++;
-  }
-
-  loadChart();
-}
-
-// =======================
-// WYKRES
-// =======================
-
-let chart;
-
 async function loadTable() {
-  const data = await Arkusze.getAll("Arkusz1");
+  let data = await Arkusze.getAll("Arkusz1");
+  data = JSON.parse(data); // <--- bardzo ważne
 
   const tbody = document.querySelector("#votesTable tbody");
-  tbody.innerHTML = ""; // wyczyść poprzednie
+  tbody.innerHTML = "";
 
-  // pomiń pierwszy wiersz (pusty)
-  for(let i=1; i<data.length; i++){
+  for(let i=1; i<data.length; i++){ // pomiń wiersz 1 (pusty)
     const row = data[i];
-    if(row[1]) { // kolumna B (ID głosu) musi istnieć
+    if(row[0]) { // kolumna B (ID głosu)
       const tr = document.createElement("tr");
-      // B=1, C=2, D=3, E=4, F=5, G=6 → indeks 0-based
       tr.innerHTML = `
+        <td>${row[0]}</td>
         <td>${row[1]}</td>
         <td>${row[2]}</td>
         <td>${row[3]}</td>
         <td>${row[4]}</td>
         <td>${row[5]}</td>
-        <td>${row[6]}</td>
       `;
       tbody.appendChild(tr);
     }
   }
 }
 
-// odświeżanie co 5 sekund
+// =======================
+// AUTOLOAD
+// =======================
 loadTable();
 setInterval(loadTable, 5000);
 
-loadChart();
-setInterval(loadChart,5000);
-
 </script>
-
 </body>
 </html>
