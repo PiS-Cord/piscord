@@ -51,19 +51,7 @@ table, th, td {
 <div id="candidates"></div>
 
 <h3>Wyniki</h3>
-<table id="votesTable">
-  <thead>
-    <tr>
-      <th>ID głosu</th>
-      <th>Nick Discord</th>
-      <th>Discord ID</th>
-      <th>Województwo</th>
-      <th>Kandydat</th>
-      <th>Data / Godzina</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+<h4></h4>
 
 <script>
 // =======================
@@ -116,39 +104,6 @@ async function vote(candidate){
 
   await loadTable();
   alert("Głos zapisany.");
-}
-
-// =======================
-// TABELA GŁOSÓW
-// =======================
-async function loadTable() {
-  let dataText = await Arkusze.getAll("Arkusz1");
-  let data = [];
-  try {
-    data = JSON.parse(dataText);
-  } catch(e) {
-    console.warn("Niepoprawny JSON z arkusza, ignoruję wiersze:", dataText);
-    return;
-  }
-
-  const tbody = document.querySelector("#votesTable tbody");
-  tbody.innerHTML = ""; 
-
-  // filtrujemy wiersze, które mają ID głosu (kolumna B = indeks 1)
-  const filtered = data.filter(row => row[1] && row[1].toString().trim() !== "");
-
-  filtered.forEach(row => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${row[1]}</td>   <!-- ID głosu -->
-      <td>${row[2]}</td>   <!-- Nick Discord -->
-      <td>${row[3]}</td>   <!-- Discord ID -->
-      <td>${row[4]}</td>   <!-- Województwo -->
-      <td>${row[5]}</td>   <!-- Kandydat -->
-      <td>${row[6]}</td>   <!-- Timestamp -->
-    `;
-    tbody.appendChild(tr);
-  });
 }
 
 // =======================
