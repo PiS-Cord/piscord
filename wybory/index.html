@@ -147,6 +147,7 @@ async function vote(candidate) {
     alert("Głos oddany pomyślnie");
 
     await aktualizujStatystykiKandydatow();
+    await aktualizujStatystykiWojewodztw("Arkusz1");
     
   } catch (err) {
     console.error("Błąd zapisu głosu:", err);
@@ -221,6 +222,84 @@ async function aktualizujStatystykiKandydatow(arkusz = "Arkusz1", wierszNaglowka
   await Promise.all(operacje);
 }
 
+async function aktualizujStatystykiWojewodztw(arkusz = "Arkusz1") {
+  const kandydaci = Object.keys(candidates);   // ["A", "B", "C", ...]
+
+  if (kandydaci.length === 0) return;
+
+  const wojewodztwa = [
+    "Dolnośląskie", "Kujawsko-Pomorskie", "Lubelskie", "Lubuskie",
+    "Łódzkie", "Małopolskie", "Mazowieckie", "Opolskie",
+    "Podkarpackie", "Podlaskie", "Pomorskie", "Śląskie",
+    "Świętokrzyskie", "Warmińsko-Mazurskie", "Wielkopolskie", "Zachodniopomorskie"
+  ];
+
+  const startKolumna = 8;   // H = 8
+  const zakresGlosow = "F2:F5000";
+  const zakresWoj = "E2:E5000";
+
+  const operacje = [];
+
+  wojewodztwa.forEach((woj, wojIndex) => {
+    const kolumna = startKolumna + wojIndex;
+    const litera = String.fromCharCode(64 + kolumna);   // H, I, J, ...
+
+    // ────────────────────────────────────────────────
+    // Wiersz 3 – nazwa województwa
+    // ────────────────────────────────────────────────
+    operacje.push(
+      setCell(`${litera}3`, woj, arkusz)
+    );
+
+    // ────────────────────────────────────────────────
+    // Wiersz 4 – łączna liczba głosów w województwie
+    // ────────────────────────────────────────────────
+    operacje.push(
+      setCell(
+        `${litera}4`,
+        `=COUNTIF(${zakresWoj};"${woj}")`,
+        arkusz
+      )
+    );
+
+    // ────────────────────────────────────────────────
+    // Wiersze 5+ – głosy na poszczególnych kandydatów
+    // ────────────────────────────────────────────────
+    kandydaci.forEach((kod, kandIndex) => {
+      const wierszKandydata = 5 + kandIndex;   // A → 5, B → 6, C → 7 itd.
+
+      operacje.push(
+        setCell(
+          `${litera}${wierszKandydata}`,
+          `=COUNTIFS(${zakresWoj};"${woj}"; ${zakresGlosow};"${kod}")`,
+          arkusz
+        )
+      );
+    });
+
+    // ────────────────────────────────────────────────
+    // Procenty – po wszystkich kandydatach
+    // ────────────────────────────────────────────────
+    const wierszPierwszyProcent = 5 + kandydaci.length;
+    kandydaci.forEach((kod, kandIndex) => {
+      const wierszProcent = wierszPierwszyProcent + kandIndex;
+      const wierszLicznik = 5 + kandIndex;
+
+      operacje.push(
+        setCell(
+          `${litera}${wierszProcent}`,
+          `=IF(${litera}4>0; ROUND(${litera}${wierszLicznik}/${litera}4*100;1) & " %"; "0 %")`,
+          arkusz
+        )
+      );
+    });
+  });
+
+  // ────────────────────────────────────────────────
+  // Wykonaj wszystkie operacje naraz
+  // ────────────────────────────────────────────────
+  await Promise.all(operacje);
+}
 // =======================
 // POMOCNICZA FUNKCJA – ostatni zajęty 
 // =======================
