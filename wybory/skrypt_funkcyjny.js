@@ -200,6 +200,7 @@ async function aktualizujStatystykiWojewodztw(arkusz = "Arkusz1") {
 // ────────────────────────────────────────────────
 let chartPieOgolne = null;
 let chartBarOgolne = null;
+let chartPieWoj = null;
 let chartBarWoj = null;
 
 async function odswiezWykresy() {
@@ -241,11 +242,13 @@ async function odswiezWykresy() {
 
   console.log("Policzone głosy:", liczniki);
 
-  // Kołowy ogólnopolski
   const labels = Object.keys(candidates).map(k => candidates[k].name);
   const dane = Object.keys(candidates).map(k => liczniki[k] || 0);
   const kolory = Object.values(candidates).map(c => c.color);
 
+  // ──────────────────────────────
+  // Ogólnopolski – kołowy
+  // ──────────────────────────────
   if (chartPieOgolne) chartPieOgolne.destroy();
   chartPieOgolne = new Chart(document.getElementById('pieOgolne'), {
     type: 'pie',
@@ -253,8 +256,35 @@ async function odswiezWykresy() {
     options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
   });
 
-  // Słupkowy województw
+  // Ogólnopolski – słupkowy
+  if (chartBarOgolne) chartBarOgolne.destroy();
+  chartBarOgolne = new Chart(document.getElementById('barOgolne'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Głosy', data: dane, backgroundColor: kolory }] },
+    options: { responsive: true, scales: { y: { beginAtZero: true } } }
+  });
+
+  // ──────────────────────────────
+  // Wojewódzki – kołowy (nowy)
+  // ──────────────────────────────
   const labelsWoj = Object.keys(wojStats).sort();
+  const totalWoj = {};
+  labelsWoj.forEach(w => totalWoj[w] = Object.values(wojStats[w] || {}).reduce((a, b) => a + b, 0));
+
+  if (chartPieWoj) chartPieWoj.destroy();
+  chartPieWoj = new Chart(document.getElementById('pieWojewodztwa'), {
+    type: 'pie',
+    data: {
+      labels: labelsWoj,
+      datasets: [{
+        data: labelsWoj.map(w => totalWoj[w] || 0),
+        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF']
+      }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+  });
+
+  // Wojewódzki – słupkowy grupowany
   const datasetsWoj = Object.keys(candidates).map(k => ({
     label: candidates[k].name,
     data: labelsWoj.map(w => wojStats[w]?.[k] || 0),
@@ -273,16 +303,21 @@ async function odswiezWykresy() {
     }
   });
 
-  console.log("Wykresy gotowe");
+  console.log("Wykresy zaktualizowane");
 }
 
 // Przełączanie wykresów
 function toggleChart(typ) {
   if (typ === 'ogolne') {
-    const pie = document.getElementById('pieOgolne').parentElement;
-    const bar = document.getElementById('barOgolneContainer');
-    pie.style.display = pie.style.display === 'none' ? 'block' : 'none';
-    bar.style.display = bar.style.display === 'none' ? 'block' : 'none';
+    const pieContainer = document.getElementById('pieOgolne').parentElement;
+    const barContainer = document.getElementById('barOgolneContainer');
+    pieContainer.style.display = pieContainer.style.display === 'none' ? 'block' : 'none';
+    barContainer.style.display = barContainer.style.display === 'none' ? 'block' : 'none';
+  } else if (typ === 'wojewodzkie') {
+    const pieContainer = document.getElementById('pieWojewodztwa').parentElement;
+    const barContainer = document.getElementById('barWojewodztwaContainer');
+    pieContainer.style.display = pieContainer.style.display === 'none' ? 'block' : 'none';
+    barContainer.style.display = barContainer.style.display === 'none' ? 'block' : 'none';
   }
 }
 
