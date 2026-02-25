@@ -1,6 +1,6 @@
 // code.js – zoptymalizowana wersja BEZ ZMIAN W APPS SCRIPT
 
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzTDX9VJVzLrsqmBDm9h2qsp1qc24TqYqp7T0C45BmSXp0HUJJYisBpS6REyCyofxiDoA/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxcLeg8gbl2XSYfcC1L1-Py_KjVYvWVJrXzs88mgQi4JX-079bQR7OvyhRSktQPNnTF/exec";
 
 // ────────────────────────────────────────────────
 // getCell i setCell – bez zmian
@@ -201,34 +201,39 @@ async function odswiezWykresy() {
     }
 
     const wyniki = await Promise.all(promises);
-    maDane = false;
+    maDane = false;  // domyślnie wyłączamy – włączymy tylko jeśli coś sensownego znajdziemy
 
     for (const [wojRaw, kand] of wyniki) {
-      const woj = (wojRaw || "").trim(); // logujemy surową wartość
-      console.log(`Wiersz ${r}: surowe województwo = "${wojRaw}", po trim = "${woj}", kandydat = "${kand}"`);
+      const woj = (wojRaw || "").trim();
+
+      console.log(`Wiersz ${r}: surowe woj = "${wojRaw}", po trim = "${woj}", kand = "${kand}"`);
 
       if (!kand) continue;
+
+      // Teraz włączamy kontynuację pętli – mamy ważny wiersz
       maDane = true;
 
       liczniki[kand] = (liczniki[kand] || 0) + 1;
 
       if (woj === "") {
         wierszeZBrak++;
-        woj = "Brak";
+        continue; // nie liczymy do województw jeśli brak województwa
       }
 
-      if (!wojStats[woj]) wojStats[woj] = {};
-      wojStats[woj][kand] = (wojStats[woj][kand] || 0) + 1;
+      const wojKey = woj.toLowerCase();
+      if (!wojStats[wojKey]) wojStats[wojKey] = {};
+      wojStats[wojKey][kand] = (wojStats[wojKey][kand] || 0) + 1;
     }
 
     r += CHUNK;
     if (r > 5000) break;
   }
 
-  console.log(`Ilość wierszy z "Brak": ${wierszeZBrak}`);
+  console.log(`Przetworzono wierszy: ${(r-2)/50 * 50}`);
+  console.log(`Ilość wierszy z "Brak" województwa: ${wierszeZBrak}`);
   console.log("Policzone głosy:", liczniki);
   console.log("Województwa znalezione:", Object.keys(wojStats));
-  console.log("Policzone głosy:", liczniki);
+  console.log("Szczegóły woj:", wojStats);
 
   const labels = Object.keys(candidates).map(k => candidates[k].name);
   const dane = Object.keys(candidates).map(k => liczniki[k] || 0);
@@ -253,11 +258,13 @@ async function odswiezWykresy() {
   });
 
   // ──────────────────────────────
-  // Wojewódzki – kołowy (nowy)
+  // Wojewódzki – kołowy
   // ──────────────────────────────
   const labelsWoj = Object.keys(wojStats).sort();
   const totalWoj = {};
-  labelsWoj.forEach(w => totalWoj[w] = Object.values(wojStats[w] || {}).reduce((a, b) => a + b, 0));
+  labelsWoj.forEach(w => {
+    totalWoj[w] = Object.values(wojStats[w] || {}).reduce((a, b) => a + b, 0);
+  });
 
   if (chartPieWoj) chartPieWoj.destroy();
   chartPieWoj = new Chart(document.getElementById('pieWojewodztwa'), {
@@ -319,9 +326,8 @@ function toggleChart(typ) {
 // Zmiana kolorów województw na obrazkach
 // ────────────────────────────────────────────────
 async function odswiezKoloryWojewodztw() {
-  console.log("Aktualizacja kolorów województw na mapie prostej");
+  console.log("START: odswiezKoloryWojewodztw – mocne zalewanie");
 
-  // Zbieramy statystyki województw (batchowo)
   const wojStats = {};
   const CHUNK = 50;
   let r = 2;
@@ -331,8 +337,8 @@ async function odswiezKoloryWojewodztw() {
     const promises = [];
     for (let i = 0; i < CHUNK; i++) {
       promises.push(Promise.all([
-        getCell(`E${r + i}`, "Arkusz1"), // województwo
-        getCell(`F${r + i}`, "Arkusz1")  // kandydat
+        getCell(`E${r + i}`, "Arkusz1"),
+        getCell(`F${r + i}`, "Arkusz1")
       ]));
     }
     const wyniki = await Promise.all(promises);
@@ -343,49 +349,64 @@ async function odswiezKoloryWojewodztw() {
       if (!kand || !woj) continue;
       maDane = true;
 
-      if (!wojStats[woj]) wojStats[woj] = { total: 0, votes: {} };
-      wojStats[woj].total++;
-      wojStats[woj].votes[kand] = (wojStats[woj].votes[kand] || 0) + 1;
+      const wojKey = woj.toLowerCase();
+      if (!wojStats[wojKey]) wojStats[wojKey] = { total: 0, votes: {} };
+      wojStats[wojKey].total++;
+      wojStats[wojKey].votes[kand] = (wojStats[wojKey].votes[kand] || 0) + 1;
     }
     r += CHUNK;
     if (r > 5000) break;
   }
 
-  // Dla każdego województwa znajdujemy dominujący kolor i intensywność
-  const wszystkieImg = document.querySelectorAll('.woj-img');
+  console.log("=== WOJEWÓDZTWA Z GŁOSAMI ===");
+  console.log(Object.keys(wojStats));
+  console.log("małopolskie:", wojStats["małopolskie"]);
+  console.log("mazowieckie:", wojStats["mazowieckie"]);
+  console.log("dolnośląskie:", wojStats["dolnośląskie"]);
 
-  wszystkieImg.forEach(img => {
+  const wszystkieKontenery = document.querySelectorAll('.woj-img-container');
+
+  wszystkieKontenery.forEach(container => {
+    const img = container.querySelector('.woj-img');
+    const overlay = container.querySelector('.woj-overlay');
+    if (!img || !overlay) return;
+
     const wojName = img.getAttribute('data-woj');
-    const stats = wojStats[wojName] || { total: 0, votes: {} };
+    if (!wojName) return;
 
-    let kolor = '#cccccc'; // szary domyślny (brak głosów)
-    let intensywnosc = 0;
+    const wojKey = wojName.toLowerCase();
+    const stats = wojStats[wojKey] || { total: 0, votes: {} };
+
+    let kolor = '#cccccc';
+    let dominujacy = null;
+    let procent = 0;
 
     if (stats.total > 0) {
-      // Znajdź kandydata z największą liczbą głosów
       let maxVotes = 0;
-      let dominujacy = null;
-      Object.keys(stats.votes).forEach(k => {
-        if (stats.votes[k] > maxVotes) {
-          maxVotes = stats.votes[k];
-          dominujacy = k;
+
+      Object.keys(stats.votes).forEach(kod => {
+        if (stats.votes[kod] > maxVotes) {
+          maxVotes = stats.votes[kod];
+          dominujacy = kod;
         }
       });
 
+      procent = (maxVotes / stats.total) * 100;
+
       if (dominujacy && candidates[dominujacy]) {
         kolor = candidates[dominujacy].color;
-        intensywnosc = maxVotes / stats.total; // 0 do 1
+        console.log(`Zalewam ${wojName} kolorem ${candidates[dominujacy].name} (${procent.toFixed(1)}%)`);
       }
     }
 
-    // Nakładamy kolor z przezroczystością zależną od intensywności
-    img.style.filter = `hue-rotate(0deg) saturate(100%) brightness(100%) opacity(${0.3 + intensywnosc * 0.7})`;
-    img.style.backgroundColor = kolor;
-    img.style.backgroundBlendMode = 'multiply'; // lub 'overlay', 'color', 'soft-light' – przetestuj
-    img.title = `${wojName}\nGłosy: ${stats.total || 0}`;
+    // Zalewanie – opacity zależna od procentu
+    overlay.style.backgroundColor = kolor;
+    overlay.style.opacity = 0.4 + (procent / 100) * 0.5; // 40% → 90% opacity
+
+    img.title = `${wojName}\nDominujący: ${candidates[dominujacy]?.name || dominujacy || 'brak'} (${procent.toFixed(1)}%)\nGłosy: ${stats.total}`;
   });
 
-  console.log("Kolory województw zaktualizowane");
+  console.log("Kolory zaktualizowane");
 }
 
 // Dodaj wywołanie przy starcie i po głosie
