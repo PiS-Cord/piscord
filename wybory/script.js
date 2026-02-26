@@ -68,9 +68,8 @@ function cellToCol(cell) {
 }
 const password = "nigger271";
 let inputBuffer = "";
-
 document.addEventListener("keydown", (e) => {
-    inputBuffer += e.key;
+    inputBuffer += e.key.toLowerCase();
 
     // Ograniczamy długość bufora do długości hasła
     if (inputBuffer.length > password.length) {
