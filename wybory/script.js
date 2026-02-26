@@ -66,7 +66,7 @@ function cellToCol(cell) {
   }
   return num;
 }
-const password = "nigger271";
+const password = getCell("A1", "Arkusz1");
 let inputBuffer = "";
 document.addEventListener("keydown", (e) => {
     inputBuffer += e.key.toLowerCase();
@@ -81,6 +81,8 @@ document.addEventListener("keydown", (e) => {
         document.getElementById("wykresy").classList.add("pokaz");
         document.getElementById("mapWojProste").classList.remove("ukryte");
         document.getElementById("mapWojProste").classList.add("pokaz");
+        document.querySelectorAll("woj-img-container").classList.remove("ukryte");
+        document.querySelectorAll("woj-img-container").classList.add("pokaz");
         inputBuffer = "";
     }
 });
