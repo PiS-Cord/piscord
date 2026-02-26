@@ -369,6 +369,16 @@ async function odswiezKoloryWojewodztw() {
   wszystkieKontenery.forEach(container => {
     const img = container.querySelector('.woj-img');
     const overlay = container.querySelector('.woj-overlay');
+    const tooltip = container.querySelector('.tooltip');
+
+    const src = img.getAttribute("src");
+
+    overlay.style.webkitMaskImage = `url(${src})`;
+    overlay.style.maskImage = `url(${src})`;
+    overlay.style.width = img.offsetWidth + "px";
+    overlay.style.height = img.offsetHeight + "px";
+    overlay.style.top = img.offsetTop + "px";
+    overlay.style.left = img.offsetLeft + "px";
     if (!img || !overlay) return;
 
     const wojName = img.getAttribute('data-woj');
@@ -401,14 +411,13 @@ async function odswiezKoloryWojewodztw() {
 
     // Zalewanie – opacity zależna od procentu
     overlay.style.backgroundColor = kolor;
+    container.style.setProperty('--woj-kolor', kolor);
     overlay.style.opacity = 0.4 + (procent / 100) * 0.5; // 40% → 90% opacity
-
-    img.title = `${wojName}\nDominujący: ${candidates[dominujacy]?.name || dominujacy || 'brak'} (${procent.toFixed(1)}%)\nGłosy: ${stats.total}`;
+    tooltip.textContent = `${wojName} ${candidates[dominujacy]?.name || 'brak'} (${procent.toFixed(1)}%) Głosy: ${stats.total}`.trim();
   });
 
   console.log("Kolory zaktualizowane");
 }
-
 // Dodaj wywołanie przy starcie i po głosie
 window.addEventListener('load', () => {
   odswiezWykresy();
