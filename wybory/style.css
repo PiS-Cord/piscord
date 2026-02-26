@@ -15,6 +15,19 @@ h3 {
     transform: scale(2);
     filter: drop-shadow(5px 5px red) drop-shadow(-5px -5px blue);
 }
+.tooltip {
+    color: white;
+    z-index: 1;
+    font-size: 9px;
+    position: absolute;   /* absolutnie w kontenerze */
+    top: 30%;
+    left: 20%;
+    width: 40%;
+    font-weight: bold;
+    text-shadow: 1px 1px 4px black;  /* żeby było widać na tle */
+    pointer-events: none;  /* żeby nie blokował hovera */
+    text-align: center;
+}
 .woj-img-container {
   position: relative;
   overflow: visible;
@@ -22,25 +35,195 @@ h3 {
   height: auto;
   aspect-ratio: 1 / 1;         /* kwadrat – możesz zmienić na 4/3, 16/9 itp. */
 }
+.w1 {
+  transform: translate(360px, 0px);
+}
+.c1 {
+  transform: scale(0.7) translate(500px, -20px);
+  font-size: 13px;
+  width: 60%;
+}
+.w2 {
+  transform: scale(0.7) translate(530px, 115px);
+}
+.c2 {
+  transform: scale(0.7) translate(510px, 100px);
+  font-size: 11px;
+  width: 60%;
+}
+.w3 {
+  transform: translate(120px, -50px);
+}
+.c3 {
+  transform: scale(0.7) translate(150px, -115px);
+  font-size: 13px;
+  width: 60%;
+}
+.w4 {
+    transform: scale(1.1) translate(90px, -10px);
+}
+.c4 {
+  transform: scale(0.7) translate(100px, -40px);
+  font-size: 14px;
+  width: 60%;
+}
+.w5 {
+  transform: scale(1.15) translate(20px, 40px);
+}
+.c5 {
+  transform: scale(0.7) translate(25px, 75px);
+  font-size: 15px;
+  width: 60%;
+}
+.w6 {
+  transform: translate(-750px, 155px);
+}
+.c6 {
+  transform: scale(0.7) translate(-1085px, 200px);
+  font-size: 14px;
+  width: 50%;
+}
+.w7 {
+  transform: translate(395px, 90px);
+}
+.c7 {
+  transform: scale(0.7) translate(550px, 85px);
+  font-size: 14px;
+  width: 60%;
+}
+.w8 {
+  transform: scale(1.3) translate(210px, -55px);
+}
+.c8 {
+  transform: scale(0.7) translate(350px, -110px);
+  font-size: 15px;
+  width: 60%;
+}
+.w9 {
+  transform: scale(1.35) translate(250px, -35px);
+}
+.c9 {
+  transform: scale(0.7) translate(460px, -200px);
+  font-size: 19px;
+  width: 60%;
+}
+.w10 {
+  transform: translate(250px, 60px);
+}
+.c10 {
+  transform: scale(0.7) translate(345px, 80px);
+  font-size: 17px;
+  width: 60%;
+}
+.w11 {
+  transform: scale(0.88) translate(-280px, 30px);
+}
+.c11 {
+  transform: scale(0.7) translate(-360px, 10px);
+  font-size: 15px;
+  width: 60%;
+}
+.w12 {
+  transform: scale(0.65) translate(-910px, 210px);
+}
+.c12 {
+  transform: scale(0.7) translate(-830px, 180px);
+  font-size: 11px;
+  width: 50%;
+}
+.w13 {
+  transform: scale(0.85) translate(690px, -40px);
+}
+.c13 {
+  transform: scale(0.7) translate(870px, -105px);
+  font-size: 15px;
+  width: 30%;
+}
+.w14 {
+  transform: scale(0.75) translate(680px, -130px);
+}
+.c14 {
+  transform: scale(0.7) translate(720px, -140px);
+  font-size: 18px;
+  width: 60%;
+}
+.w15 {
+  transform: scale(0.8) translate(320px, 10px);
+}
+.c15 {
+  transform: scale(0.7) translate(350px, -15px);
+  font-size: 17px;
+  width: 60%;
+}
+.w16 {
+  transform: translate(200px, 0px);
+}
+.c16 {
+  transform: scale(0.7) translate(250px, -15px);
+  font-size: 18px;
+  width: 60%;
+}
 
 .woj-img {
   position: absolute;
   inset: 0;
-  width: 80%;
-  height: 80%;
+  width: 90%;
+  height: 90%;
   object-fit: contain;
   transition: filter 0.4s ease;
-  filter: drop-shadow(16px 16px var(--woj-kolor, #cccccc))
+  filter: blur(1px) drop-shadow(8px 8px var(--woj-kolor, white));
 }
-
 .woj-overlay {
   position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   inset: 0;
   pointer-events: none;
   background-color: var(--woj-kolor, #cccccc);
   opacity: var(--woj-opacity, 0);
   mix-blend-mode: multiply;     /* lub 'overlay', 'color', 'soft-light' */
   transition: opacity 0.6s ease;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  object-fit: contain;
+  filter: blur(10px);
+  cursor: pointer;
+}
+
+.woj-overlay::after {
+  content: attr(data-tooltip); /* bierze tekst z JS */
+  position: absolute;
+  left: 50%;
+  bottom: 100%; /* nad kształtem */
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: pre; /* zachowuje \n z JS */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 10;
+  background: rgba(255,0,0,0.9);   /* tło tooltipa */
+  color: #fff;                      /* kolor tekstu */
+  font-size: 0.9rem;                /* rozmiar fontu */
+  font-family: "Arial", sans-serif; /* czcionka */
+  padding: 6px 12px;                /* odstępy */
+  border-radius: 8px;               /* zaokrąglenia */
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.5); /* cień */
+  text-align: center;               /* wyrównanie tekstu */
+  transition: all 0.2s ease;        /* animacja pojawiania */
+}
+
+.woj-overlay:hover::after {
+  opacity: 1;
 }
 :root {
     --pis-navy: #003366;
