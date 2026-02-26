@@ -17,8 +17,10 @@ document.addEventListener("keydown", (e) => {
     }
 
     if (inputBuffer === password) {
-        document.getElementById("mapWojProste").classList.remove("hidden");
-        document.getElementById("wykresy").classList.remove("hidden");
+        document.getElementById("wykresy").classList.remove("ukryte");
+        document.getElementById("wykresy").classList.add("pokaz");
+        document.getElementById("mapWojProste").classList.remove("ukryte");
+        document.getElementById("mapWojProste").classList.add("pokaz");
         inputBuffer = "";
     }
 });
