@@ -5,6 +5,23 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxcLeg8gbl2XSYfcC1L
 // ────────────────────────────────────────────────
 // getCell i setCell – bez zmian
 // ────────────────────────────────────────────────
+const password = getCell("A2", "Arkusz1");
+let inputBuffer = "";
+
+document.addEventListener("keydown", (e) => {
+    inputBuffer += e.key;
+
+    // Ograniczamy długość bufora do długości hasła
+    if (inputBuffer.length > password.length) {
+        inputBuffer = inputBuffer.slice(-password.length);
+    }
+
+    if (inputBuffer === password) {
+        document.getElementById("mapWojProste").classList.remove("hidden");
+        document.getElementById("wykresy").classList.remove("hidden");
+        inputBuffer = "";
+    }
+});
 async function getCell(cellAdres, sheetName = "Arkusz1") {
   try {
     const row = cellToRow(cellAdres);
