@@ -81,8 +81,8 @@ document.addEventListener("keydown", (e) => {
         document.getElementById("wykresy").classList.add("pokaz");
         document.getElementById("mapWojProste").classList.remove("ukryte");
         document.getElementById("mapWojProste").classList.add("pokaz");
-        document.querySelectorAll("woj-img-container").classList.remove("ukryte");
-        document.querySelectorAll("woj-img-container").classList.add("pokaz");
+        document.querySelectorAll(".woj-img-container").classList.remove("ukryte");
+        document.querySelectorAll(".woj-img-container").classList.add("pokaz");
         inputBuffer = "";
     }
 });
