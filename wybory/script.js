@@ -5,25 +5,6 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxcLeg8gbl2XSYfcC1L
 // ────────────────────────────────────────────────
 // getCell i setCell – bez zmian
 // ────────────────────────────────────────────────
-const password = getCell("A2", "Arkusz1");
-let inputBuffer = "";
-
-document.addEventListener("keydown", (e) => {
-    inputBuffer += e.key;
-
-    // Ograniczamy długość bufora do długości hasła
-    if (inputBuffer.length > password.length) {
-        inputBuffer = inputBuffer.slice(-password.length);
-    }
-
-    if (inputBuffer === password) {
-        document.getElementById("wykresy").classList.remove("ukryte");
-        document.getElementById("wykresy").classList.add("pokaz");
-        document.getElementById("mapWojProste").classList.remove("ukryte");
-        document.getElementById("mapWojProste").classList.add("pokaz");
-        inputBuffer = "";
-    }
-});
 async function getCell(cellAdres, sheetName = "Arkusz1") {
   try {
     const row = cellToRow(cellAdres);
@@ -85,16 +66,34 @@ function cellToCol(cell) {
   }
   return num;
 }
+const password = getCell("A2", "Arkusz1");
+let inputBuffer = "";
 
+document.addEventListener("keydown", (e) => {
+    inputBuffer += e.key;
+
+    // Ograniczamy długość bufora do długości hasła
+    if (inputBuffer.length > password.length) {
+        inputBuffer = inputBuffer.slice(-password.length);
+    }
+
+    if (inputBuffer === password) {
+        document.getElementById("wykresy").classList.remove("ukryte");
+        document.getElementById("wykresy").classList.add("pokaz");
+        document.getElementById("mapWojProste").classList.remove("ukryte");
+        document.getElementById("mapWojProste").classList.add("pokaz");
+        inputBuffer = "";
+    }
+});
 // ────────────────────────────────────────────────
 // KONFIG KANDYDATÓW
 // ────────────────────────────────────────────────
 const candidates = {
-  A: { name: "Partia Razem", color: "#960018" },
-  B: { name: "Nowa Lewica", color: "#ff1900" },
-  C: { name: "Koalicja Obywatelska", color: "#e67022" },
-  D: { name: "Ruch Dobrobytu i Pokoju", color: "#c93322" },
-  E: { name: "Konfederacja Korony Polskiej", color: "#75310f" }
+  A: { name: "Partia Razem", color: "#BDECB6" },
+  B: { name: "Nowa Lewica", color: "#FDF4E3" },
+  C: { name: "Koalicja Obywatelska", color: " #781F19" },
+  D: { name: "Ruch Dobrobytu i Pokoju", color: "#6C7059" },
+  E: { name: "Konfederacja Korony Polskiej", color: "#CB3234" }
 };
 
 // ────────────────────────────────────────────────
