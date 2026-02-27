@@ -64,26 +64,6 @@
         </div>
     </section>
 
-    <label>Wiersz: <input id="row" type="number" value="1"></label><br>
-    <label>Kolumna (A, B… lub nr): <input id="col" type="text" value="A"></label><br>
-    <label>Wartość: <input id="value" type="text" value="Hello world"></label><br>
-    <button onclick="sendData()">Wyślij do arkusza</button>
-
-    <script>
-    function sendData() {
-      const row = document.getElementById("row").value;
-      const col = document.getElementById("col").value;
-      const value = document.getElementById("value").value;
-
-      const url = "https://script.google.com/macros/s/AKfycbyHmUDFEvHS51d7uSYCCHQpvUWXdP-ZY9Nik7VFkn_brQgrS94UHD2fMCtSLKimFS2zjA/exec";
-
-      fetch(url + `?row=${row}&col=${col}&value=${encodeURIComponent(value)}`, {
-        method: "POST"
-      })
-      .then(res => res.text())
-      .then(data => alert("Wysłano: " + data))
-      .catch(err => alert("Błąd: " + err));
-}
 </script>
     
     <footer class="footer">
