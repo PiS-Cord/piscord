@@ -66,7 +66,7 @@ function cellToCol(cell) {
   }
   return num;
 }
-const password = getCell("A1", "Arkusz1");
+const password = "niebactuska");
 let inputBuffer = "";
 document.addEventListener("keydown", (e) => {
     inputBuffer += e.key.toLowerCase();
