@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Discord → plik txt</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #2c2f33;
+      color: #ddd;
+      margin: 0;
+      padding: 40px;
+      text-align: center;
+    }
+    .box {
+      background: #36393f;
+      padding: 2rem 3rem;
+      border-radius: 12px;
+      max-width: 500px;
+      margin: 0 auto;
+      box-shadow: 0 8px 32px #0006;
+    }
+    h1 { color: #5865f2; }
+    button {
+      background: #5865f2;
+      color: white;
+      border: none;
+      padding: 14px 32px;
+      font-size: 1.1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 1.5rem 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: 0.2s;
+    }
+    button:hover { background: #4752c4; }
+    button svg { width: 24px; height: 24px; }
+    #status {
+      min-height: 1.6em;
+      font-weight: bold;
+      margin: 1rem 0;
+    }
+    .ok    { color: #57f287; }
+    .error { color: #f04747; }
+    .load  { color: #fee75c; }
+  </style>
+</head>
+<body>
+
+<div class="box">
+  <h1>Rejestracja przez Discord</h1>
+  <p>Po zalogowaniu dane (ID + nazwa) zostaną przygotowane do pobrania jako plik .txt</p>
+
+  <button id="login">
+    <svg viewBox="0 0 127.14 96.36" fill="currentColor">
+      <path d="M107.7 8.07A105.15 105.15 0 0 0 81.47 0a72.06 72.06 0 0 0-3.36 6.83 97.68 97.68 0 0 0-29.11 0A72.37 72.37 0 0 0 45.64 0a105.89 105.89 0 0 0-26.25 8.09C2.79 32.65-.09 56.6.06 80.21a113.31 113.31 0 0 0 33.09 16.59 77.06 77.06 0 0 0 6.75-10.27 70.33 70.33 0 0 1-10.81-5.14c.91-.66 1.8-1.34 2.66-2.03a73.6 73.6 0 0 0 62.36 0c.87.69 1.75 1.37 2.66 2.03a70.8 70.8 0 0 1-10.82 5.15 77.5 77.5 0 0 0 6.75 10.27 113.3 113.3 0 0 0 33.08-16.59c.17-23.61-2.71-47.56-14.07-72.14zM42.45 65.69C38.49 65.69 35 62.42 35 58.4s3.49-7.29 7.45-7.29 7.45 3.27 7.45 7.29-3.49 7.29-7.45 7.29zm42.24 0c-3.96 0-7.45-3.27-7.45-7.29s3.49-7.29 7.45-7.29 7.45 3.27 7.45 7.29-3.49 7.29-7.45 7.29z"/>
+    </svg>
+    Zaloguj się przez Discord
+  </button>
+
+  <div id="status"></div>
+</div>
+
+<script>
+// === Konfiguracja – zmień te dwie linie ===
+const CLIENT_ID    = "1478856260526018671";          // ← z https://discord.com/developers/applications
+const REDIRECT_URI = window.location.href.split('?')[0];  // ← ta sama strona
+// ==========================================
+
+const SCOPE = "identify";
+const AUTH_URL = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=${SCOPE}`;
+
+document.getElementById("login").onclick = () => {
+  window.location.href = AUTH_URL;
+};
+
+window.addEventListener("load", async () => {
+  const url = new URL(window.location.href);
+  const code = url.searchParams.get("code");
+  if (!code) return;
+
+  const status = document.getElementById("status");
+  status.textContent = "Pobieranie danych z Discorda...";
+  status.className = "load";
+
+  try {
+    // 1. Wymiana code → access_token
+    const tokenRes = await fetch("https://discord.com/api/oauth2/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id:     CLIENT_ID,
+        client_secret: "TU_WSTAW_SWÓJ_CLIENT_SECRET",   // ← MUSI być tutaj!
+        grant_type:    "authorization_code",
+        code:          code,
+        redirect_uri:  REDIRECT_URI,
+        scope:         SCOPE
+      })
+    });
+
+    if (!tokenRes.ok) throw new Error("Błąd wymiany kodu na token");
+
+    const tokenData = await tokenRes.json();
+    const accessToken = tokenData.access_token;
+
+    // 2. Pobranie danych użytkownika
+    const userRes = await fetch("https://discord.com/api/users/@me", {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    if (!userRes.ok) throw new Error("Błąd pobierania danych użytkownika");
+
+    const user = await userRes.json();
+
+    const username    = user.global_name || user.username;
+    const discriminator = user.discriminator !== "0" ? `#${user.discriminator}` : "";
+    const id          = user.id;
+    const avatarUrl   = user.avatar ? `https://cdn.discordapp.com/avatars/${id}/${user.avatar}.png` : "";
+
+    // 3. Przygotowanie linii do pliku
+    const line = `${new Date().toISOString()} | ID: ${id} | ${username}${discriminator} | Avatar: ${avatarUrl}\n`;
+
+    // 4. Pobranie dotychczasowej zawartości (jeśli plik już był)
+    let existingContent = "";
+    try {
+      const oldFile = await fetch("uzytkownicy.txt"); // próba wczytania z tego samego folderu
+      if (oldFile.ok) existingContent = await oldFile.text();
+    } catch {} // plik nie istnieje – to normalne
+
+    const fullContent = existingContent + line;
+
+    // 5. Pobranie pliku
+    const blob = new Blob([fullContent], { type: "text/plain;charset=utf-8" });
+    const urlBlob = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = urlBlob;
+    a.download = "uzytkownicy.txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(urlBlob);
+
+    status.innerHTML = `Gotowe!<br>Zapisano: <strong>${username}${discriminator}</strong> (${id})<br>Plik został pobrany.`;
+    status.className = "ok";
+
+    // Czyścimy URL
+    history.replaceState(null, null, window.location.pathname);
+
+  } catch (err) {
+    status.textContent = "Błąd: " + err.message;
+    status.className = "error";
+    console.error(err);
+  }
+});
+</script>
+
+</body>
+</html>
