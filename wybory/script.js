@@ -312,7 +312,6 @@ window.toggleChart = function(typ) {
 };
 
 async function odswiezKoloryWojewodztw() {
-  console.log("START: odswiezKoloryWojewodztw – mocne zalewanie");
   const wojStats = {};
   const CHUNK = 50;
   let r = 2;
