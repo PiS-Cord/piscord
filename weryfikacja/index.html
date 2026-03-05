@@ -269,21 +269,34 @@ window.addEventListener("load", async () => {
     if (!resp.ok) throw new Error("Błąd appendRow: " + resp.status);
 
     // 5. Ustawiamy cookie
-    document.cookie = `${COOKIE_NAME}=${verifKey}; path=/; max-age=${7776000}; SameSite=Lax`;
-    
+try {
+    // 5. Ustawiamy cookie
+    document.cookie = `${COOKIE_NAME}=${encodeURIComponent(verifKey)}; path=/; max-age=${7776000}; SameSite=Lax`;
+
     status.innerHTML = `Gotowe!<br>Zweryfikowano <strong>${username}${disc}</strong>`;
+
+    const returnParams = new URLSearchParams(location.search);
+    let returnUrl = returnParams.get("return");
+
     setTimeout(() => {
-      if (returnUrl && returnUrl.startsWith(window.location.origin)) {
-          const separator = returnUrl.includes("?") ? "&" : "?";
-          returnUrl += separator + "verified=1&discordId=" + encodeURIComponent(user.id);
-          window.location.replace(decodeURIComponent(returnUrl));
-      } else {
-          window.location.href = "https://pis-cord.github.io/wybory/?verified=1&discordId=" + encodeURIComponent(user.id);
-      } catch (err) {
-          console.error("Błąd przy ustawianiu cookie lub URL:", err);
-          status.innerHTML = "Błąd weryfikacji, spróbuj ponownie.";
+        try {
+            if (returnUrl && returnUrl.startsWith(window.location.origin)) {
+                const separator = returnUrl.includes("?") ? "&" : "?";
+                returnUrl += separator + "verified=1&discordId=" + encodeURIComponent(user.id);
+                window.location.replace(decodeURIComponent(returnUrl));
+            } else {
+                window.location.href = "https://pis-cord.github.io/wybory/?verified=1&discordId=" + encodeURIComponent(user.id);
+            }
+        } catch (redirErr) {
+            console.error("Błąd przy redirect:", redirErr);
+            status.innerHTML += "<br>Błąd przy przekierowaniu, spróbuj odświeżyć stronę.";
         }
-    }, 50); // opóźnienie minimalne
+    }, 50);
+
+} catch (err) {
+    console.error("Błąd przy ustawianiu cookie lub URL:", err);
+    status.innerHTML = "Błąd weryfikacji, spróbuj ponownie.";
+}
     const returnParams = new URLSearchParams(location.search);
     let returnUrl = returnParams.get("return");
     
