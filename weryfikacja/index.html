@@ -272,8 +272,15 @@ window.addEventListener("load", async () => {
     document.cookie = `${COOKIE_NAME}=${verifKey}; path=/; max-age=${7776000}; SameSite=Lax`;
     
     status.innerHTML = `Gotowe!<br>Zweryfikowano <strong>${username}${disc}</strong>`;
-    status.className = "success";
-    sessionStorage.setItem("discVerified", "1");
+    setTimeout(() => {
+      if (returnUrl && returnUrl.startsWith(window.location.origin)) {
+          const separator = returnUrl.includes("?") ? "&" : "?";
+          returnUrl += separator + "verified=1&discordId=" + encodeURIComponent(user.id);
+          window.location.replace(decodeURIComponent(returnUrl));
+      } else {
+          window.location.href = "https://pis-cord.github.io/wybory/?verified=1&discordId=" + encodeURIComponent(user.id);
+      }
+    }, 50); // opóźnienie minimalne
     const returnParams = new URLSearchParams(location.search);
     let returnUrl = returnParams.get("return");
     
@@ -285,7 +292,6 @@ window.addEventListener("load", async () => {
     } else {
       // domyślny powrót
       window.location.href = "https://pis-cord.github.io/wybory/?verified=1&discordId=" + encodeURIComponent(user.id);
-    }
   } catch (err) {
     status.textContent = "Błąd: " + (err.message || String(err));
     status.className = "error";
