@@ -32,6 +32,7 @@ if (isVerifiedFromUrl && discordIdFromUrl) {
   document.getElementById("nick").readOnly = true;
 }
 (async function checkVerificationAndLoadUser() {
+  if (window.verificationChecked) return;
   const params = new URLSearchParams(location.search);
   const code = params.get("code");
 
