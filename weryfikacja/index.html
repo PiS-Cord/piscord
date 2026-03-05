@@ -279,7 +279,10 @@ window.addEventListener("load", async () => {
           window.location.replace(decodeURIComponent(returnUrl));
       } else {
           window.location.href = "https://pis-cord.github.io/wybory/?verified=1&discordId=" + encodeURIComponent(user.id);
-      }
+      } catch (err) {
+          console.error("Błąd przy ustawianiu cookie lub URL:", err);
+          status.innerHTML = "Błąd weryfikacji, spróbuj ponownie.";
+        }
     }, 50); // opóźnienie minimalne
     const returnParams = new URLSearchParams(location.search);
     let returnUrl = returnParams.get("return");
