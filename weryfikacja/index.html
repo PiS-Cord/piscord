@@ -116,6 +116,7 @@ window.addEventListener("load", async () => {
     }
     document.getElementById("introText").innerHTML = "";
     status.innerHTML = '<div class="already">Jesteś już zweryfikowany ✓</div><small>Możesz wrócić na stronę głosowania.</small>';
+    window.location.replace(decodeURIComponent(returnUrl));
     return;
   }
 
@@ -267,19 +268,18 @@ window.addEventListener("load", async () => {
 
     status.innerHTML = `Gotowe!<br>Zweryfikowano <strong>${username}${disc}</strong>`;
     status.className = "success";
-
-    // 6. POWRÓT NA POPRZEDNIĄ STRONĘ – tylko jeśli wszystko się udało
     const returnParams = new URLSearchParams(location.search);
-    const returnUrl = returnParams.get("return");
-
+    let returnUrl = returnParams.get("return");
+    
     if (returnUrl && returnUrl.startsWith(window.location.origin)) {
-      console.log("Powrót na:", returnUrl);
+      // Dodajemy ?verified=1&userId=... do adresu powrotu
+      const separator = returnUrl.includes("?") ? "&" : "?";
+      returnUrl += separator + "verified=1&discordId=" + encodeURIComponent(user.id);
       window.location.replace(decodeURIComponent(returnUrl));
     } else {
-      console.log("Brak poprawnego return – zostajemy tutaj");
-      // opcjonalnie: window.location.href = "https://pis-cord.github.io/wybory/";
+      // domyślny powrót
+      window.location.href = "https://pis-cord.github.io/wybory/?verified=1&discordId=" + encodeURIComponent(user.id);
     }
-
   } catch (err) {
     status.textContent = "Błąd: " + (err.message || String(err));
     status.className = "error";
