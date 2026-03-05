@@ -15,21 +15,16 @@ function getCookie(name) {
   if (parts.length === 2) return parts.pop().split(';').shift();
   return null;
 }
-
-(async function checkVerification() {
+(async function checkVerificationAndLoadUser() {
   const params = new URLSearchParams(location.search);
   const code = params.get("code");
 
-  // Jeśli jesteśmy właśnie po powrocie z Discorda → nie przekierowuj, daj szansę na zalogowanie
-  if (code) {
-    console.log("Powrót z Discorda – pomijam przekierowanie");
-    return;
-  }
+  // Jeśli wracamy z Discorda → nie blokujemy, czekamy na zapis
+  if (code) return;
 
   const key = getCookie(COOKIE_NAME);
 
   if (!key || key.length < MIN_KEY_LEN) {
-    console.log("Brak klucza – przekierowanie na weryfikację");
     window.location.replace(VERIFICATION_PAGE + "?return=" + encodeURIComponent(window.location.href));
     return;
   }
@@ -47,20 +42,15 @@ function getCookie(name) {
     const data = await res.json();
 
     if (!data.valid) {
-      console.log("Klucz nieważny – usuwam cookie i przekierowuję");
       document.cookie = COOKIE_NAME + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
       window.location.replace(VERIFICATION_PAGE + "?return=" + encodeURIComponent(window.location.href));
       return;
     }
 
-    // Zweryfikowany – ukryj przycisk logowania
-    const loginBtn = document.getElementById("loginBtn");
-    if (loginBtn) loginBtn.style.display = "none";
-
-    const statusEl = document.getElementById("status");
-    if (statusEl) {
-      statusEl.innerHTML = '<div class="already">Jesteś zweryfikowany ✓</div><small>Możesz oddać głos.</small>';
-    }
+    // Zweryfikowany → pobieramy dane użytkownika z klucza (opcjonalnie – można dodać akcję w Apps Script)
+    // Na razie tylko pokazujemy komunikat
+    document.getElementById("nick").value = "Zweryfikowany użytkownik";
+    document.getElementById("nick").placeholder = "Zweryfikowany przez Discord";
 
   } catch (err) {
     console.error("Błąd weryfikacji:", err);
@@ -92,15 +82,13 @@ Object.keys(candidates).forEach(key => {
 });
 
 async function vote(candidate) {
-  const nick = document.getElementById("nick").value.trim();
   const woj = document.getElementById("wojewodztwo").value;
 
-  if (!nick || !woj) {
-    alert("Podaj nick i wybierz województwo!");
+  if (!woj) {
+    alert("Wybierz województwo!");
     return;
   }
 
-  // 1. Sprawdzamy, czy użytkownik jest zweryfikowany (cookie + klucz w arkuszu)
   const key = getCookie(COOKIE_NAME);
   if (!key) {
     alert("Musisz się zweryfikować Discordem!");
@@ -109,14 +97,12 @@ async function vote(candidate) {
   }
 
   try {
-    // 2. Wysyłamy głos + klucz do Apps Script (tam sprawdzimy Discord ID i czy już głosował)
     const res = await fetch(WEB_APP_URL, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         action: "submitVote",
         verificationKey: key,
-        nick: nick,
         wojewodztwo: woj,
         candidate: candidate
       })
@@ -129,11 +115,10 @@ async function vote(candidate) {
       odswiezWykresy();
       odswiezKoloryWojewodztw();
     } else {
-      alert(result.message || "Błąd podczas oddawania głosu!");
+      alert(result.message || "Błąd podczas głosowania!");
     }
-
   } catch (err) {
-    alert("Błąd połączenia z serwerem.");
+    alert("Błąd połączenia.");
     console.error(err);
   }
 }
