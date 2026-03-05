@@ -318,8 +318,8 @@ async function odswiezKoloryWojewodztw() {
     const promises = [];
     for (let i = 0; i < CHUNK; i++) {
       promises.push(Promise.all([
-        getCell(E${r + i}, "Arkusz1"),
-        getCell(F${r + i}, "Arkusz1")
+        getCell('E${r + i}', "glosy"),
+        getCell('F${r + i}', "glosy")
       ]));
     }
     const wyniki = await Promise.all(promises);
