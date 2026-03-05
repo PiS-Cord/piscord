@@ -320,8 +320,6 @@ window.toggleChart = function(typ) {
 };
 
 async function odswiezKoloryWojewodztw() {
-  console.log("START: odswiezKoloryWojewodztw – mocne zalewanie");
-
   const wojStats = {};
   const CHUNK = 50;
   let r = 2;
@@ -352,11 +350,6 @@ async function odswiezKoloryWojewodztw() {
     if (r > 5000) break;
   }
 
-  console.log("=== WOJEWÓDZTWA Z GŁOSAMI ===");
-  console.log(Object.keys(wojStats));
-  console.log("małopolskie:", wojStats["małopolskie"]);
-  console.log("mazowieckie:", wojStats["mazowieckie"]);
-  console.log("dolnośląskie:", wojStats["dolnośląskie"]);
 
   const wszystkieKontenery = document.querySelectorAll('.woj-img-container');
 
@@ -399,7 +392,6 @@ async function odswiezKoloryWojewodztw() {
 
       if (dominujacy && candidates[dominujacy]) {
         kolor = candidates[dominujacy].color;
-        console.log(`Zalewam ${wojName} kolorem ${candidates[dominujacy].name} (${procent.toFixed(1)}%)`);
       }
     }
 
@@ -410,7 +402,6 @@ async function odswiezKoloryWojewodztw() {
     tooltip.textContent = `${wojName} ${candidates[dominujacy]?.name || 'brak'} (${procent.toFixed(1)}%) Głosy: ${stats.total}`.trim();
   });
 
-  console.log("Kolory zaktualizowane");
 }
 // Dodaj wywołanie przy starcie i po głosie
 window.addEventListener('load', () => {
