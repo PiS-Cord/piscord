@@ -254,8 +254,8 @@ async function odswiezWykresy() {
   const wojStats = {};
   let r = 2;
   while (true) {
-    const wojRaw = await getCell(`C${r}`, "glosy");  // ← kolumna C = województwo
-    const kand = await getCell(`D${r}`, "glosy");    // ← kolumna D = kandydat
+    const wojRaw = await getCell(`C${r}`);
+    const kand = await getCell(`D${r}`);
     if (!kand) break;
     liczniki[kand] = (liczniki[kand] || 0) + 1;
     if (wojRaw) {
@@ -310,35 +310,33 @@ window.toggleChart = function(typ) {
 };
 
 async function odswiezKoloryWojewodztw() {
-  const wojStats = {};
-  const CHUNK = 50;
-  let r = 2;
-  let maDane = true;
+  console.log("START: odswiezKoloryWojewodztw – mocne zalewanie");
+  const wojStats = {};
+  const CHUNK = 50;
+  let r = 2;
+  let maDane = true;
   while (maDane) {
-      const promises = [];
-      for (let i = 0; i < CHUNK; i++) {
-        promises.push(Promise.all([
-          getCell(`C${r + i}`),   // ← poprawione
-          getCell(`D${r + i}`)
-        ]));
-      }
-  
-      const wyniki = await Promise.all(promises);
-      maDane = false;
-  
-      for (const [wojRaw, kand] of wyniki) {
-        const woj = (wojRaw || "").trim();
-        if (!kand || !woj) continue;
-        maDane = true;
-        const wojKey = woj.toLowerCase();
-        if (!wojStats[wojKey]) wojStats[wojKey] = { total: 0, votes: {} };
-        wojStats[wojKey].total++;
-        wojStats[wojKey].votes[kand] = (wojStats[wojKey].votes[kand] || 0) + 1;
-      }
-  
-      r += CHUNK;
-      if (r > 5000) break;
+    const promises = [];
+    for (let i = 0; i < CHUNK; i++) {
+      promises.push(Promise.all([
+        getCell(`C${r + i}`),   // ← poprawione – backticki
+        getCell(`D${r + i}`)
+      ]));
     }
+    const wyniki = await Promise.all(promises);
+    maDane = false;
+    for (const [wojRaw, kand] of wyniki) {
+      const woj = (wojRaw || "").trim();
+      if (!kand || !woj) continue;
+      maDane = true;
+      const wojKey = woj.toLowerCase();
+      if (!wojStats[wojKey]) wojStats[wojKey] = { total: 0, votes: {} };
+      wojStats[wojKey].total++;
+      wojStats[wojKey].votes[kand] = (wojStats[wojKey].votes[kand] || 0) + 1;
+    }
+    r += CHUNK;
+    if (r > 5000) break;
+  }
   const wszystkieKontenery = document.querySelectorAll('.woj-img-container');
   wszystkieKontenery.forEach(container => {
     const img = container.querySelector('.woj-img');
