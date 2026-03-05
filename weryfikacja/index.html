@@ -292,12 +292,7 @@ window.addEventListener("load", async () => {
     } else {
       // domyślny powrót
       window.location.href = "https://pis-cord.github.io/wybory/?verified=1&discordId=" + encodeURIComponent(user.id);
-  } catch (err) {
-    status.textContent = "Błąd: " + (err.message || String(err));
-    status.className = "error";
-    console.error(err);
   }
-
   // Czyszczenie tylko po sukcesie lub błędzie – ale już po całym procesie
   sessionStorage.clear();
   history.replaceState({}, document.title, location.pathname);
