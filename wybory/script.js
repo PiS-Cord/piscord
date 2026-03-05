@@ -338,8 +338,46 @@ async function odswiezKoloryWojewodztw() {
     r += CHUNK;
     if (r > 5000) break;
   }
-  // reszta funkcji bez zmian (kolory, overlay, tooltip itd.)
-  // ...
+  const wszystkieKontenery = document.querySelectorAll('.woj-img-container');
+  wszystkieKontenery.forEach(container => {
+    const img = container.querySelector('.woj-img');
+    const overlay = container.querySelector('.woj-overlay');
+    const tooltip = container.querySelector('.tooltip');
+    const src = img.getAttribute("src");
+    overlay.style.webkitMaskImage = url(${src});
+    overlay.style.maskImage = url(${src});
+    overlay.style.width = img.offsetWidth + "px";
+    overlay.style.height = img.offsetHeight + "px";
+    overlay.style.top = img.offsetTop + "px";
+    overlay.style.left = img.offsetLeft + "px";
+    if (!img || !overlay) return;
+    const wojName = img.getAttribute('data-woj');
+    if (!wojName) return;
+    const wojKey = wojName.toLowerCase();
+    const stats = wojStats[wojKey] || { total: 0, votes: {} };
+    let kolor = '#cccccc';
+    let dominujacy = null;
+    let procent = 0;
+    if (stats.total > 0) {
+      let maxVotes = 0;
+      Object.keys(stats.votes).forEach(kod => {
+        if (stats.votes[kod] > maxVotes) {
+          maxVotes = stats.votes[kod];
+          dominujacy = kod;
+        }
+      });
+      procent = (maxVotes / stats.total) * 100;
+      if (dominujacy && candidates[dominujacy]) {
+        kolor = candidates[dominujacy].color;
+      }
+    }
+    // Zalewanie – opacity zależna od procentu
+    overlay.style.backgroundColor = kolor;
+    container.style.setProperty('--woj-kolor', kolor);
+    overlay.style.opacity = 0.4 + (procent / 100) * 0.5; // 40% → 90% opacity
+    tooltip.textContent = ${wojName} ${candidates[dominujacy]?.name || 'brak'} (${procent.toFixed(1)}%) Głosy: ${stats.total}.trim();
+  });
+}
 }
 // Dodaj wywołanie przy starcie i po głosie
 window.addEventListener('load', () => {
