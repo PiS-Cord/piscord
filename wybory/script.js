@@ -17,9 +17,19 @@ function getCookie(name) {
 }
 
 (async function checkVerification() {
+  const params = new URLSearchParams(location.search);
+  const code = params.get("code");
+
+  // Jeśli jesteśmy właśnie po powrocie z Discorda → nie przekierowuj, daj szansę na zalogowanie
+  if (code) {
+    console.log("Powrót z Discorda – pomijam przekierowanie");
+    return;
+  }
+
   const key = getCookie(COOKIE_NAME);
 
   if (!key || key.length < MIN_KEY_LEN) {
+    console.log("Brak klucza – przekierowanie na weryfikację");
     window.location.replace(VERIFICATION_PAGE + "?return=" + encodeURIComponent(window.location.href));
     return;
   }
@@ -37,21 +47,19 @@ function getCookie(name) {
     const data = await res.json();
 
     if (!data.valid) {
+      console.log("Klucz nieważny – usuwam cookie i przekierowuję");
       document.cookie = COOKIE_NAME + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
       window.location.replace(VERIFICATION_PAGE + "?return=" + encodeURIComponent(window.location.href));
       return;
     }
 
-    // Zweryfikowany – pokazujemy komunikat i ukryjemy przycisk Discord
+    // Zweryfikowany – ukryj przycisk logowania
     const loginBtn = document.getElementById("loginBtn");
-    if (loginBtn) {
-      loginBtn.style.display = "none";
-    }
+    if (loginBtn) loginBtn.style.display = "none";
+
     const statusEl = document.getElementById("status");
     if (statusEl) {
-      statusEl.innerHTML = 
-        '<div class="already">Jesteś zweryfikowany ✓</div>' +
-        '<small>Możesz oddać głos.</small>';
+      statusEl.innerHTML = '<div class="already">Jesteś zweryfikowany ✓</div><small>Możesz oddać głos.</small>';
     }
 
   } catch (err) {
