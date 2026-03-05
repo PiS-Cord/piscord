@@ -180,7 +180,17 @@ window.addEventListener("load", async () => {
     });
 
     // Cookie
+    // ustawiamy cookie + session flag
     document.cookie = `${COOKIE_NAME}=${encodeURIComponent(verifKey)}; path=/; max-age=${7776000}; SameSite=Lax`;
+    sessionStorage.setItem("discVerified", "1");
+    
+    // redirect
+    let returnUrl = new URLSearchParams(location.search).get("return");
+    if (returnUrl && returnUrl.startsWith(window.location.origin)) {
+        window.location.replace(returnUrl);
+    } else {
+        window.location.href = "https://pis-cord.github.io/wybory/";
+    }
     status.innerHTML = `Gotowe!<br>Zweryfikowano <strong>${username}${disc}</strong>`;
 
     // Redirect
