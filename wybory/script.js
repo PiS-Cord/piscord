@@ -1,12 +1,14 @@
-// script.js – Kompletna wersja z hasłem w A2 i naprawionymi wykresami
-
+// ────────────────────────────────────────────────
+// KONFIGURACJA
+// ────────────────────────────────────────────────
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzc6pmNpf5OnyWbNtEcW_jLBA5GXQnmhFSJiLIUbOXhxfm-Ir6oocF9kQ3g7Tdi8rCBtw/exec";
-// ────────────────────────────────────────────────
-// discord weryfikacja
-const COOKIE_NAME    = "disc_verif_key";
-const VERIFICATION_PAGE = "https://pis-cord.github.io/weryfikacja/";
-// ────────────────────────────────────────────────
+const COOKIE_NAME = "disc_verif_key";
+const VERIFICATION_PAGE = "https://pis-cord.github.io/weryfikacja/"; // ← zmień jeśli inna ścieżka
+const MIN_KEY_LEN = 20;
 
+// ────────────────────────────────────────────────
+// WERYFIKACJA – sprawdza cookie + klucz w arkuszu
+// ────────────────────────────────────────────────
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -17,13 +19,11 @@ function getCookie(name) {
 (async function checkVerification() {
   const key = getCookie(COOKIE_NAME);
 
-  // Brak klucza → od razu na weryfikację
-  if (!key) {
+  if (!key || key.length < MIN_KEY_LEN) {
     window.location.replace(VERIFICATION_PAGE + "?return=" + encodeURIComponent(window.location.href));
     return;
   }
 
-  // Jest klucz → sprawdzamy w arkuszu
   try {
     const res = await fetch(WEB_APP_URL, {
       method: "POST",
@@ -37,20 +37,93 @@ function getCookie(name) {
     const data = await res.json();
 
     if (!data.valid) {
-      // Klucz nieważny / nie istnieje → usuwamy ciasteczko i przekierowujemy
       document.cookie = COOKIE_NAME + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
       window.location.replace(VERIFICATION_PAGE + "?return=" + encodeURIComponent(window.location.href));
+      return;
     }
 
-    // Klucz jest ważny → strona ładuje się normalnie
-    console.log("Użytkownik zweryfikowany");
+    // Zweryfikowany – pokazujemy komunikat i ukryjemy przycisk Discord
+    document.getElementById("loginBtn")?.style.display = "none";
+    document.getElementById("status")?.innerHTML = 
+      '<div class="already">Jesteś zweryfikowany ✓</div>' +
+      '<small>Możesz oddać głos.</small>';
 
   } catch (err) {
-    console.error("Błąd weryfikacji klucza:", err);
-    // W razie błędu – traktujemy jako niezweryfikowany (bezpieczniej)
+    console.error("Błąd weryfikacji:", err);
     window.location.replace(VERIFICATION_PAGE + "?return=" + encodeURIComponent(window.location.href));
   }
 })();
+
+// ────────────────────────────────────────────────
+// GŁOSOWANIE – z weryfikacją Discord ID + jeden głos na osobę
+// ────────────────────────────────────────────────
+const candidates = {
+  A: { name: "Mateusz Morawiecki", color: "#155ed4" },
+  B: { name: "Tobiasz Bocheński", color: "#d1a70f" },
+  C: { name: "Zbigniew Bogucki", color: "#b31b20" },
+  D: { name: "Przemysław Czarnek", color: "#1f1f1f" },
+  E: { name: "Jarosław Margielski", color: "#7a8dbf" },
+  F: { name: "Anna Krupka", color: "#579e71" },
+  G: { name: "Lucjusz Nadbereżny", color: "#cad620" }
+};
+
+const candContainer = document.getElementById("candidates");
+Object.keys(candidates).forEach(key => {
+  const div = document.createElement("div");
+  div.className = "candidate";
+  div.textContent = candidates[key].name;
+  div.style.backgroundColor = candidates[key].color;
+  div.onclick = () => vote(key);
+  candContainer.appendChild(div);
+});
+
+async function vote(candidate) {
+  const nick = document.getElementById("nick").value.trim();
+  const woj = document.getElementById("wojewodztwo").value;
+
+  if (!nick || !woj) {
+    alert("Podaj nick i wybierz województwo!");
+    return;
+  }
+
+  // 1. Sprawdzamy, czy użytkownik jest zweryfikowany (cookie + klucz w arkuszu)
+  const key = getCookie(COOKIE_NAME);
+  if (!key) {
+    alert("Musisz się zweryfikować Discordem!");
+    window.location.replace(VERIFICATION_PAGE + "?return=" + encodeURIComponent(window.location.href));
+    return;
+  }
+
+  try {
+    // 2. Wysyłamy głos + klucz do Apps Script (tam sprawdzimy Discord ID i czy już głosował)
+    const res = await fetch(WEB_APP_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        action: "submitVote",
+        verificationKey: key,
+        nick: nick,
+        wojewodztwo: woj,
+        candidate: candidate
+      })
+    });
+
+    const result = await res.json();
+
+    if (result.success) {
+      alert("Głos oddany pomyślnie!");
+      odswiezWykresy();
+      odswiezKoloryWojewodztw();
+    } else {
+      alert(result.message || "Błąd podczas oddawania głosu!");
+    }
+
+  } catch (err) {
+    alert("Błąd połączenia z serwerem.");
+    console.error(err);
+  }
+}
+
 // ────────────────────────────────────────────────
 // SYSTEM ADMINA PRZEZ KONSOLĘ (Hasło z A2)
 // ────────────────────────────────────────────────
@@ -125,53 +198,6 @@ function cellToCol(cell) {
   let num = 0;
   for (let i = 0; i < col.length; i++) { num = num * 26 + (col.charCodeAt(i) - 64); }
   return num;
-}
-// ────────────────────────────────────────────────
-// KONFIG KANDYDATÓW
-// ────────────────────────────────────────────────
-const candidates = {
-  A: { name: "Mateusz Morawiecki", color: "#155ed4" },
-  B: { name: "Tobiasz Bocheński", color: "#d1a70f" },
-  C: { name: "Zbigniew Bogucki", color: "#b31b20" },
-  D: { name: "Przemysław Czarnek", color: "#1f1f1f" },
-  E: { name: "Jarosław Margielski", color: "#7a8dbf" },
-  F: { name: "Anna Krupka", color: "#579e71" },
-  G: { name: "Lucjusz Nadbereżny", color: "#cad620" }
-};
-
-// Generowanie przycisków
-const candContainer = document.getElementById("candidates");
-if (candContainer) {
-    for (const key in candidates) {
-      const div = document.createElement("div");
-      div.className = "candidate";
-      div.textContent = candidates[key].name;
-      div.style.backgroundColor = candidates[key].color;
-      div.onclick = () => vote(key);
-      candContainer.appendChild(div);
-    }
-}
-
-async function vote(candidate) {
-  const nick = document.getElementById("nick").value.trim();
-  const woj = document.getElementById("wojewodztwo").value;
-
-  if (!nick || woj === "def" || !woj) return alert("Podaj nick i wybierz województwo!");
-
-  let wiersz = 2;
-  while (await getCell(`B${wiersz}`)) { wiersz++; if (wiersz > 5000) break; }
-
-  await Promise.all([
-    setCell(`B${wiersz}`, "V" + Date.now()),
-    setCell(`C${wiersz}`, nick),
-    setCell(`E${wiersz}`, woj),
-    setCell(`F${wiersz}`, candidate),
-    setCell(`G${wiersz}`, new Date().toISOString())
-  ]);
-
-  alert("Głos oddany!");
-  odswiezWykresy();
-  odswiezKoloryWojewodztw();
 }
 
 // ────────────────────────────────────────────────
