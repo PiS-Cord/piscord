@@ -1,7 +1,7 @@
 // ────────────────────────────────────────────────
 // KONFIGURACJA
 // ────────────────────────────────────────────────
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw9rGG9GUn9orSFG42akNlQlGb98vFE6xbpDDsSTtuWTEttwvnIqckylprO_52cyNAxzQ/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwFnaV1vq_ToxsRnCA2MjFx7Pnes_Ud8j8ipUdRpHyxsqJRs_94bKZKUXnEt0a5mSsQ0A/exec";
 const COOKIE_NAME = "disc_verif_key";
 const VERIFICATION_PAGE = "https://pis-cord.github.io/weryfikacja/"; // ← zmień jeśli inna ścieżka
 const MIN_KEY_LEN = 20;
