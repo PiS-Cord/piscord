@@ -110,7 +110,10 @@ window.addEventListener("load", async () => {
 
   // Jeśli już zweryfikowany – pokazujemy komunikat i koniec
   if (isAlreadyVerified()) {
-    document.getElementById("loginBtn")?.style.display = "none";
+    const loginBtn = document.getElementById("loginBtn");
+    if (loginBtn) {
+      loginBtn.style.display = "none";
+    }
     document.getElementById("introText").innerHTML = "";
     status.innerHTML = '<div class="already">Jesteś już zweryfikowany ✓</div><small>Możesz wrócić na stronę głosowania.</small>';
     return;
