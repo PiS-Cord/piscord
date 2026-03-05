@@ -41,11 +41,11 @@
 <script>
 // ────────────────────────────────────────────────
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw9rGG9GUn9orSFG42akNlQlGb98vFE6xbpDDsSTtuWTEttwvnIqckylprO_52cyNAxzQ/exec";
-const CLIENT_ID    = "1478856260526018671";
+const CLIENT_ID = "1478856260526018671";
 const REDIRECT_URI = window.location.origin + window.location.pathname;
-const SCOPE        = "identify";
-const COOKIE_NAME  = "disc_verif_key";
-const MIN_KEY_LEN  = 20;
+const SCOPE = "identify";
+const COOKIE_NAME = "disc_verif_key";
+const MIN_KEY_LEN = 20;
 // ────────────────────────────────────────────────
 
 const authUrl = new URL("https://discord.com/api/oauth2/authorize");
@@ -63,13 +63,17 @@ function isAlreadyVerified() {
   return key && key.length >= MIN_KEY_LEN;
 }
 
-// ── Podpinamy przycisk od razu (na wszelki wypadek) ──────────────
+// ── Podpinamy przycisk od razu ──────────────
 document.addEventListener("DOMContentLoaded", () => {
   const wrocbtn = document.getElementById("wroc");
   const btn = document.getElementById("loginBtn");
+
   if (wrocbtn) {
-    wrocbtn.onlick =  window.location = "https://pis-cord.github.io/wybory";
+    wrocbtn.onclick = () => {
+      window.location.href = "https://pis-cord.github.io/wybory/";
+    };
   }
+
   if (btn) {
     btn.onclick = async () => {
       const status = document.getElementById("status");
@@ -100,37 +104,48 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// ── Główna logika po załadowaniu (całość async) ───────────────────
+// ── Główna logika po załadowaniu ───────────────────
 window.addEventListener("load", async () => {
   const status = document.getElementById("status");
 
-  // Sprawdzamy cookie
+  // Jeśli już zweryfikowany – pokazujemy komunikat i koniec
   if (isAlreadyVerified()) {
-    document.getElementById("loginBtn").style.display = "none";
+    document.getElementById("loginBtn")?.style.display = "none";
     document.getElementById("introText").innerHTML = "";
-    status.innerHTML = '<div class="already">Jesteś już zweryfikowany ✓</div><small>Możesz zamknąć tę stronę lub przejść dalej.</small>';
-    document.getElementById("keyDisplay").style.display = "none";
+    status.innerHTML = '<div class="already">Jesteś już zweryfikowany ✓</div><small>Możesz wrócić na stronę głosowania.</small>';
     return;
   }
 
   const params = new URLSearchParams(location.search);
   const code = params.get("code");
-  if (!code) return;
 
+  // Jeśli nie ma code → nic nie robimy (normalne wejście lub powrót z innego powodu)
+  if (!code) {
+    status.textContent = "Kliknij przycisk powyżej, aby się zweryfikować.";
+    return;
+  }
+
+  // ── Mamy code → logowanie ───────────────────────
   const state = params.get("state");
   const savedState = sessionStorage.getItem("oauth_state");
+
   if (state !== savedState) {
-    status.textContent = "Błąd: state mismatch";
+    status.textContent = "Błąd bezpieczeństwa (state mismatch)";
     status.className = "error";
     return;
   }
 
   const verifier = sessionStorage.getItem("pkce_verifier");
-  if (!verifier) return;
+  if (!verifier) {
+    status.textContent = "Brak verifiera – spróbuj ponownie";
+    status.className = "error";
+    return;
+  }
 
   status.textContent = "Wymiana kodu na token...";
 
   try {
+    // 1. Token
     const tokenBody = new URLSearchParams({
       client_id: CLIENT_ID,
       grant_type: "authorization_code",
@@ -149,6 +164,7 @@ window.addEventListener("load", async () => {
 
     const { access_token } = await tokenRes.json();
 
+    // 2. Dane użytkownika
     const userRes = await fetch("https://discord.com/api/users/@me", {
       headers: { Authorization: `Bearer ${access_token}` }
     });
@@ -165,28 +181,28 @@ window.addEventListener("load", async () => {
 
     const verifKey = crypto.randomUUID().replace(/-/g, "");
 
-    // Sprawdzamy bana
+    // 3. Sprawdzamy bana
     const checkBanBody = new URLSearchParams({
       action: "getAll",
       sheet: "discord"
     });
-    
+
     const banCheckRes = await fetch(WEB_APP_URL, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: checkBanBody
     });
-    
+
     const banDataText = await banCheckRes.text();
-    
+
     let banData = [];
     try {
       const parsed = JSON.parse(banDataText);
-      banData = parsed.data || parsed;  // jeśli opakowałeś w {success: true, data: [...]}
+      banData = parsed.data || parsed;
     } catch (e) {
       console.warn("Błąd parsowania getAll:", e);
     }
-    
+
     let isBanned = false;
     for (let row of banData) {
       if (Array.isArray(row) && row.length > 7 && row[1] === user.id && row[7] === "BAN") {
@@ -194,6 +210,7 @@ window.addEventListener("load", async () => {
         break;
       }
     }
+
     if (isBanned) {
       const banLogValues = JSON.stringify([
         new Date().toISOString(),
@@ -214,10 +231,10 @@ window.addEventListener("load", async () => {
 
       status.innerHTML = `<span class="banned">Jesteś zbanowany!</span><br>Próba logowania odnotowana.`;
       status.className = "error";
-      return;
+      return; // ← WAŻNE – przerywamy, nie zapisujemy klucza
     }
 
-    // Normalny zapis
+    // 4. Normalny zapis
     const valuesArray = [
       new Date().toISOString(),
       user.id,
@@ -240,33 +257,36 @@ window.addEventListener("load", async () => {
       })
     });
 
-    if (!resp.ok) throw new Error("Błąd appendRow");
+    if (!resp.ok) throw new Error("Błąd appendRow: " + resp.status);
 
+    // 5. Ustawiamy cookie
     document.cookie = `${COOKIE_NAME}=${verifKey}; path=/; max-age=${7776000}; SameSite=Lax`;
 
     status.innerHTML = `Gotowe!<br>Zweryfikowano <strong>${username}${disc}</strong>`;
     status.className = "success";
 
+    // 6. POWRÓT NA POPRZEDNIĄ STRONĘ – tylko jeśli wszystko się udało
+    const returnParams = new URLSearchParams(location.search);
+    const returnUrl = returnParams.get("return");
+
+    if (returnUrl && returnUrl.startsWith(window.location.origin)) {
+      console.log("Powrót na:", returnUrl);
+      window.location.replace(decodeURIComponent(returnUrl));
+    } else {
+      console.log("Brak poprawnego return – zostajemy tutaj");
+      // opcjonalnie: window.location.href = "https://pis-cord.github.io/wybory/";
+    }
+
   } catch (err) {
-    status.textContent = "Błąd: " + (err.message || err);
+    status.textContent = "Błąd: " + (err.message || String(err));
     status.className = "error";
     console.error(err);
   }
-  // Dodaj na końcu istniejącego skryptu na stronie weryfikacyjnej
 
-  // po ustawieniu cookie i pokazaniu sukcesu
-  // Po udanej weryfikacji – sprawdź, czy jest parametr return i wróć na poprzednią stronę
-  const returnParams = new URLSearchParams(location.search);
-  const returnUrl = returnParams.get("return");
-  
-  if (returnUrl && returnUrl.startsWith(window.location.origin)) {
-    console.log("Powrót na:", returnUrl);
-    window.location.replace(decodeURIComponent(returnUrl));
-  } else {
-   window.location.href = "https://pis-cord.github.io/";
-  }
+  // Czyszczenie tylko po sukcesie lub błędzie – ale już po całym procesie
+  sessionStorage.clear();
+  history.replaceState({}, document.title, location.pathname);
 });
-  
 </script>
 </body>
 </html>
