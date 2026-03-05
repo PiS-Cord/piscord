@@ -15,6 +15,22 @@ function getCookie(name) {
   if (parts.length === 2) return parts.pop().split(';').shift();
   return null;
 }
+// Odczytujemy dane z URL po powrocie z weryfikacji
+const urlParams = new URLSearchParams(location.search);
+const isVerifiedFromUrl = urlParams.get("verified") === "1";
+const discordIdFromUrl = urlParams.get("discordId");
+
+if (isVerifiedFromUrl && discordIdFromUrl) {
+  // Czyścimy URL z parametrów (żeby nie było widać ID)
+  history.replaceState({}, document.title, window.location.pathname);
+
+  // Zapamiętujemy Discord ID w sessionStorage
+  sessionStorage.setItem("verifiedDiscordId", discordIdFromUrl);
+
+  // Pokazujemy nick z Discorda
+  document.getElementById("nick").value = "Zweryfikowany użytkownik (Discord)";
+  document.getElementById("nick").readOnly = true;
+}
 (async function checkVerificationAndLoadUser() {
   const params = new URLSearchParams(location.search);
   const code = params.get("code");
@@ -96,13 +112,42 @@ async function vote(candidate) {
     return;
   }
 
+  // Pobieramy Discord ID albo z sessionStorage, albo pytamy serwer
+  let discordId = sessionStorage.getItem("verifiedDiscordId");
+
+  if (!discordId) {
+    try {
+      const res = await fetch(WEB_APP_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          action: "getDiscordIdByKey",
+          key: key
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.success && data.discordId) {
+        discordId = data.discordId;
+        sessionStorage.setItem("verifiedDiscordId", discordId);
+      } else {
+        alert("Nieprawidłowy klucz weryfikacyjny!");
+        return;
+      }
+    } catch (err) {
+      alert("Błąd połączenia z serwerem.");
+      return;
+    }
+  }
+
   try {
     const res = await fetch(WEB_APP_URL, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         action: "submitVote",
-        verificationKey: key,
+        discordId: discordId,
         wojewodztwo: woj,
         candidate: candidate
       })
