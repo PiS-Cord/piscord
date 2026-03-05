@@ -142,7 +142,7 @@ function sprawdzGodzine() {
     const teraz = new Date();
 
     // rok, miesiąc (0-11!), dzień, godzina, minuta
-    const start = new Date(2026, 2, 5, 21, 10); 
+    const start = new Date(2026, 2, 5, 21, 32); 
 
     if (teraz >= start) {
 
