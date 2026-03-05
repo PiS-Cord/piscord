@@ -25,7 +25,7 @@
       box-shadow: 0 8px 32px rgba(0,0,0,0.7);
     }
     h1 { color: #7289da; margin-bottom: 1.2rem; }
-    p  { color: #a0b0e0; line-height: 1.5; margin-bottom: 2rem; }
+    p { color: #a0b0e0; line-height: 1.5; margin-bottom: 2rem; }
     button {
       background: #5865f2;
       color: white;
@@ -102,12 +102,12 @@ function isAlreadyVerified() {
   return key && key.length >= MIN_KEY_LEN;
 }
 
-// ── Pokazujemy komunikat o weryfikacji na starcie ─────────────────
-window.addEventListener("load", () => {
+// ── Główna logika – dodane async tutaj ↓↓↓
+window.addEventListener("load", async () => {
   if (isAlreadyVerified()) {
     document.getElementById("loginBtn").style.display = "none";
     document.getElementById("introText").innerHTML = "";
-    document.getElementById("status").innerHTML = 
+    document.getElementById("status").innerHTML =
       '<div class="already">Jesteś już zweryfikowany ✓</div>' +
       '<small>Możesz zamknąć tę stronę lub przejść dalej.</small>';
     document.getElementById("keyDisplay").style.display = "none";
@@ -116,32 +116,81 @@ window.addEventListener("load", () => {
 
   // Jeśli nie zweryfikowany – normalny flow
   const params = new URLSearchParams(location.search);
-  const code  = params.get("code");
+  const code = params.get("code");
   const state = params.get("state");
 
   if (!code) return;
 
-  // reszta Twojego kodu logowania poniżej...
-  // (wklejam tylko zmienioną część – resztę zostaw bez zmian)
+  const savedState = sessionStorage.getItem("oauth_state");
+  if (state !== savedState) {
+    document.getElementById("status").textContent = "Błąd: state mismatch";
+    document.getElementById("status").className = "error";
+    return;
+  }
 
-  // ... (twój kod od const savedState = ... aż do końca bloku try)
+  const verifier = sessionStorage.getItem("pkce_verifier");
+  if (!verifier) return;
 
-  // ZMIANA W BLOKU ZAPISU – sprawdzanie bana + log próby
+  const status = document.getElementById("status");
+  status.textContent = "Wymiana kodu na token...";
+
   try {
-    // ── Najpierw sprawdzamy, czy użytkownik jest zbanowany ───────
+    // 1. Wymiana code → token (PKCE)
+    const tokenBody = new URLSearchParams({
+      client_id: CLIENT_ID,
+      grant_type: "authorization_code",
+      code,
+      redirect_uri: REDIRECT_URI,
+      code_verifier: verifier
+    });
+
+    const tokenRes = await fetch("https://discord.com/api/oauth2/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: tokenBody
+    });
+
+    if (!tokenRes.ok) throw new Error(await tokenRes.text());
+
+    const { access_token } = await tokenRes.json();
+
+    // 2. Dane użytkownika
+    const userRes = await fetch("https://discord.com/api/users/@me", {
+      headers: { Authorization: `Bearer ${access_token}` }
+    });
+
+    if (!userRes.ok) throw new Error("Błąd /users/@me");
+
+    const user = await userRes.json();
+
+    const username = user.global_name || user.username;
+    const disc = user.discriminator === "0" ? "" : "#" + user.discriminator;
+    const avatarUrl = user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128` : "";
+
+    status.textContent = "Zapisywanie do arkusza...";
+
+    // 3. Generujemy klucz
+    const verifKey = crypto.randomUUID().replace(/-/g, ""); // prostszy klucz, 32 znaki
+
+    // 4. Najpierw sprawdzamy, czy użytkownik jest zbanowany
     const checkBanBody = new URLSearchParams({
       action: "getAll",
       sheet: "discord"
     });
 
-    const banCheckRes = await fetch(WEB_APP_URL + "?" + checkBanBody);
+    const banCheckRes = await fetch(WEB_APP_URL + "?" + checkBanBody.toString());
     const banDataText = await banCheckRes.text();
+
     let banData = [];
-    try { banData = JSON.parse(banDataText); } catch {}
+    try {
+      banData = JSON.parse(banDataText);
+    } catch {
+      console.warn("Nie udało się sparsować danych z getAll");
+    }
 
     let isBanned = false;
     for (let row of banData) {
-      if (row[1] === user.id && row[7] === "BAN") {  // kolumna H (indeks 7) = status bana
+      if (Array.isArray(row) && row[1] === user.id && row[7] === "BAN") {
         isBanned = true;
         break;
       }
@@ -158,7 +207,7 @@ window.addEventListener("load", () => {
     ];
 
     if (isBanned) {
-      // ── Logujemy próbę logowania po banie do osobnego arkusza ──
+      // Logujemy próbę logowania po banie
       const banLogValues = JSON.stringify([
         new Date().toISOString(),
         user.id,
@@ -172,17 +221,16 @@ window.addEventListener("load", () => {
         body: new URLSearchParams({
           action: "appendRow",
           values: banLogValues,
-          sheet: "bany_log"   // ← arkusz musi istnieć!
+          sheet: "bany_log"
         })
       });
 
-      // Pokazujemy komunikat o banie
       status.innerHTML = `<span class="banned">Jesteś zbanowany!</span><br>Próba logowania odnotowana.`;
       status.className = "error";
       return;
     }
 
-    // ── Normalny zapis, jeśli nie zbanowany ───────────────────────
+    // Normalny zapis, jeśli nie zbanowany
     const values = JSON.stringify(valuesArray);
 
     const resp = await fetch(WEB_APP_URL, {
@@ -195,7 +243,7 @@ window.addEventListener("load", () => {
       })
     });
 
-    if (!resp.ok) throw new Error("Błąd appendRow");
+    if (!resp.ok) throw new Error("Błąd appendRow: " + resp.status);
 
     // Ustawiamy cookie
     document.cookie = `${COOKIE_NAME}=${verifKey}; path=/; max-age=${7776000}; SameSite=Lax`;
