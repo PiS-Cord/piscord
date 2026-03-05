@@ -270,9 +270,10 @@ window.addEventListener("load", async () => {
 
     // 5. Ustawiamy cookie
     document.cookie = `${COOKIE_NAME}=${verifKey}; path=/; max-age=${7776000}; SameSite=Lax`;
-
+    
     status.innerHTML = `Gotowe!<br>Zweryfikowano <strong>${username}${disc}</strong>`;
     status.className = "success";
+    sessionStorage.setItem("discVerified", "1");
     const returnParams = new URLSearchParams(location.search);
     let returnUrl = returnParams.get("return");
     
