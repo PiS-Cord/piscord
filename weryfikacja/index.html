@@ -255,7 +255,23 @@ window.addEventListener("load", async () => {
     status.className = "error";
     console.error(err);
   }
+  // Dodaj na końcu istniejącego skryptu na stronie weryfikacyjnej
+
+  // po ustawieniu cookie i pokazaniu sukcesu
+  const params = new URLSearchParams(location.search);
+  const returnTo = params.get("return");
+  
+  if (returnTo) {
+    // bezpieczeństwo: tylko ta sama domena
+    if (returnTo.startsWith(window.location.origin)) {
+      window.location.replace(decodeURIComponent(returnTo));
+    }
+  } else {
+    // jeśli nie ma return → możesz przekierować np. na dashboard
+    // window.location.href = "/dashboard.html";
+  }
 });
+  
 </script>
 </body>
 </html>
