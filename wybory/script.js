@@ -33,20 +33,34 @@ if (isVerifiedFromUrl && discordIdFromUrl) {
 }
 (async function checkVerificationAndLoadUser() {
   if (window.verificationChecked) return;
+  window.verificationChecked = true; // zabezpieczenie przed podwójnym wywołaniem
+
   const params = new URLSearchParams(location.search);
   const code = params.get("code");
 
-  // Jeśli wracamy z Discorda → nie blokujemy, czekamy na zapis
+  // Jeśli wracamy z Discorda → nie blokujemy
   if (code) return;
 
-    const key = getCookie(COOKIE_NAME);
-    const verifiedFlag = sessionStorage.getItem("discVerified");
-    
-    if ((!key || key.length < MIN_KEY_LEN) && !verifiedFlag) {
-        window.location.replace(VERIFICATION_PAGE + "?return=" + encodeURIComponent(window.location.href));
-        return;
-    }
+  const key = getCookie(COOKIE_NAME);
 
+  // Jeśli nie ma klucza → na weryfikację
+  if (!key || key.length < MIN_KEY_LEN) {
+    console.log("Brak ważnego cookie → przekierowanie");
+    window.location.replace(VERIFICATION_PAGE + "?return=" + encodeURIComponent(window.location.href));
+    return;
+  }
+
+  // TESTOWO: ufamy cookie bez sprawdzania w arkuszu
+  console.log("Cookie OK, ufamy bez checkVerificationKey (test)");
+  const nickField = document.getElementById("nick");
+  if (nickField) {
+    nickField.value = "Użytkownik zweryfikowany (cookie)";
+    nickField.readOnly = true;
+    nickField.placeholder = "Możesz oddać głos.";
+  }
+
+  // Jeśli chcesz przywrócić sprawdzanie w arkuszu – odkomentuj poniższy blok
+  /*
   try {
     const res = await fetch(WEB_APP_URL, {
       method: "POST",
@@ -58,26 +72,24 @@ if (isVerifiedFromUrl && discordIdFromUrl) {
     });
 
     const data = await res.json();
+    console.log("Odpowiedź checkVerificationKey:", data);
 
     if (!data.valid) {
+      console.log("Klucz nieważny według serwera → usuwam cookie");
       document.cookie = COOKIE_NAME + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
       window.location.replace(VERIFICATION_PAGE + "?return=" + encodeURIComponent(window.location.href));
       return;
     }
 
-    // Zweryfikowany → pobieramy dane użytkownika z klucza (opcjonalnie – można dodać akcję w Apps Script)
-    // Na razie tylko pokazujemy komunikat
+    // Zweryfikowany → komunikat
     document.getElementById("nick").value = "Użytkownik zweryfikowany.";
-    document.getElementById("nick").placeholder = "Możesz oddać głos.";
-    if (sprawdzGodzine2() == 1) {
-      document.getElementById("nick").value = "Głosowanie niedostępne.";
-      document.getElementById("nick").placeholder = "Głosowanie niedostępne.";
-    }
-
+    document.getElementById("nick").readOnly = true;
   } catch (err) {
-    console.error("Błąd weryfikacji:", err);
-    window.location.replace(VERIFICATION_PAGE + "?return=" + encodeURIComponent(window.location.href));
+    console.error("Błąd podczas checkVerificationKey:", err);
+    // Jeśli błąd → nie przekierowuj (bezpieczniej podczas testów)
+    // window.location.replace(VERIFICATION_PAGE + "?return=" + encodeURIComponent(window.location.href));
   }
+  */
 })();
 
 // ────────────────────────────────────────────────
