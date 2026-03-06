@@ -50,14 +50,6 @@ if (isVerifiedFromUrl && discordIdFromUrl) {
     return;
   }
 
-  // TESTOWO: ufamy cookie bez sprawdzania w arkuszu
-  const nickField = document.getElementById("nick");
-  if (nickField) {
-    nickField.value = "Użytkownik zweryfikowany.";
-    nickField.readOnly = true;
-    nickField.placeholder = "Możesz oddać głos.";
-  }
-
   // Jeśli chcesz przywrócić sprawdzanie w arkuszu – odkomentuj poniższy blok
   try {
     const res = await fetch(WEB_APP_URL, {
