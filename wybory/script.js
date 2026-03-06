@@ -59,7 +59,6 @@ if (isVerifiedFromUrl && discordIdFromUrl) {
   }
 
   // Jeśli chcesz przywrócić sprawdzanie w arkuszu – odkomentuj poniższy blok
-  /*
   try {
     const res = await fetch(WEB_APP_URL, {
       method: "POST",
@@ -87,7 +86,6 @@ if (isVerifiedFromUrl && discordIdFromUrl) {
     // Jeśli błąd → nie przekierowuj (bezpieczniej podczas testów)
     // window.location.replace(VERIFICATION_PAGE + "?return=" + encodeURIComponent(window.location.href));
   }
-  */
 })();
 
 // ────────────────────────────────────────────────
