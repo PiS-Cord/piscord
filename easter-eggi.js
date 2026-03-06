@@ -9,10 +9,10 @@ let typed = "";
 // Obsługa wielokrotnego kliknięcia (np. w logo lub obrazek)
 function playEasterEgg() {
     clickCount++;
-    if (clickCount === 5) { 
-        openEasterEgg("film.mp4"); 
-        clickCount = 0; 
-    }
+ if (clickCount === 5) { 
+    openEasterEgg("../film.mp4"); // Dodano ../
+    clickCount = 0; 
+}
     // Resetuj licznik jeśli użytkownik klika zbyt wolno
     setTimeout(() => { clickCount = 0; }, 2000);
 }
@@ -46,9 +46,9 @@ document.addEventListener("keydown", function(e) {
         typed = typed.slice(-secretSequence.length);
     }
 
-    if (typed === secretSequence) {
-        // Dodano ../ aby wyjść do głównego folderu po batyra
-        openEasterEgg("../batyr.mp4");
-        typed = ""; 
-    }
+if (typed === secretSequence) {
+    openEasterEgg("../batyr.mp4"); // Dodano ../
+    typed = ""; 
+}
 });
+
