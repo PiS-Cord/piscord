@@ -374,6 +374,7 @@ body {
 }
 
 .text-red { color: var(--pis-red); text-shadow: 0 0 20px var(--glow-red); }
+.text-blue { color: var(--pis-navy); text-shadow: 0 0 20px var(--glow-blue); }
 
 .hero-sub { font-size: 1.1rem; color: #888; max-width: 600px; }
 
