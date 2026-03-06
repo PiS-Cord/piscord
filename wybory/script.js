@@ -157,7 +157,7 @@ async function vote(candidate) {
 function sprawdzGodzine() {
     const teraz = new Date();
 
-    // rok, miesiąc (0-11!), dzień, godzina, minuta
+    // rok, miesiąc (0-11!), dzień, godzina
     const start = new Date(2026, 2, 7, 18, 0); 
 
     if (teraz >= start) {
