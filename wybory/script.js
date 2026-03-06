@@ -51,10 +51,9 @@ if (isVerifiedFromUrl && discordIdFromUrl) {
   }
 
   // TESTOWO: ufamy cookie bez sprawdzania w arkuszu
-  console.log("Cookie OK, ufamy bez checkVerificationKey (test)");
   const nickField = document.getElementById("nick");
   if (nickField) {
-    nickField.value = "Użytkownik zweryfikowany (cookie)";
+    nickField.value = "Użytkownik zweryfikowany.";
     nickField.readOnly = true;
     nickField.placeholder = "Możesz oddać głos.";
   }
@@ -75,7 +74,6 @@ if (isVerifiedFromUrl && discordIdFromUrl) {
     console.log("Odpowiedź checkVerificationKey:", data);
 
     if (!data.valid) {
-      console.log("Klucz nieważny według serwera → usuwam cookie");
       document.cookie = COOKIE_NAME + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
       window.location.replace(VERIFICATION_PAGE + "?return=" + encodeURIComponent(window.location.href));
       return;
@@ -160,7 +158,7 @@ function sprawdzGodzine() {
     const teraz = new Date();
 
     // rok, miesiąc (0-11!), dzień, godzina, minuta
-    const start = new Date(2026, 2, 5, 23, 30); 
+    const start = new Date(2026, 2, 7, 18, 0); 
 
     if (teraz >= start) {
 
@@ -189,7 +187,7 @@ function sprawdzGodzine2() {
     const teraz2 = new Date();
 
     // rok, miesiąc (0-11!), dzień, godzina, minuta
-    const start2 = new Date(2026, 2, 6, 16, 0); 
+    const start2 = new Date(2026, 2, 6, 17, 15); 
 
     if (teraz2 >= start2) {
       const kandydaci = document.querySelectorAll(".kandydaci");
